@@ -1,0 +1,2 @@
+description = "Show darkman-x mode + voice state."
+prompt = "This command is intercepted by the darkman-x-mode-tracker.js hook before it reaches you — the hook reads the mode/voice flags directly and blocks the prompt with a line like mode=full prev=full voice=ON model=s2.1-pro-free. You should never actually need to answer this one; if you do see it, the hook path is broken — say so plainly, don't guess at the current mode."

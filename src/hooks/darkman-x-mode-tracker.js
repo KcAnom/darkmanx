@@ -39,6 +39,7 @@ const VOICE_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-voice)?\s+voice\s+(o
 const VOICE_NL_ON = [/\benable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?on\b/i, /\bspeak (?:replies|responses|out loud)\b/i];
 const VOICE_NL_OFF = [/\bdisable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?off\b/i, /\bstop speaking\b/i, /\bmute voice\b/i];
 const STATS_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?-stats\b(.*)$/i;
+const STATUS_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-status|\s+status)\b(.*)$/i;
 
 function claudeConfigDir() {
   return process.env.CLAUDE_CONFIG_DIR || path.join(require('os').homedir(), '.claude');
@@ -116,6 +117,27 @@ function clearMode() {
   config.safeWriteFlag(activeFlagPath(), 'off');
 }
 
+// Shared wording with the Pi extension's ctx.ui.notify() strings
+// (.pi/extensions/darkman-x.ts) so both surfaces read identically.
+function modeConfirmLine(mode, voiceOn) {
+  if (mode === 'off') return 'darkman-x off. Normal voice.';
+  return 'darkman-x ' + mode + (voiceOn ? ' +VOICE' : '');
+}
+
+function voiceStatusLine(dir) {
+  const on = config.isVoiceEnabled(dir);
+  const vs = config.getVoiceSettings();
+  return 'voice ' + (on ? 'ON' : 'OFF') + ' · model ' + vs.model + ' · id ' + vs.referenceId;
+}
+
+function statusLine(dir) {
+  const mode = (config.readFlag(activeFlagPath()) || 'off').trim() || 'off';
+  const prev = (config.readFlag(prevFlagPath()) || '').trim();
+  const on = config.isVoiceEnabled(dir);
+  const vs = config.getVoiceSettings();
+  return 'mode=' + mode + (prev ? ' prev=' + prev : '') + ' voice=' + (on ? 'ON' : 'OFF') + ' model=' + vs.model;
+}
+
 function runStats(argTail, transcriptPath) {
   try {
     const statsScript = path.join(__dirname, 'darkman-x-stats.js');
@@ -169,8 +191,16 @@ function main() {
     return;
   }
 
+  const statusMatch = prompt.match(STATUS_COMMAND_RE);
+  if (statusMatch) {
+    emitBlock(statusLine(claudeConfigDir()));
+    process.exit(0);
+    return;
+  }
+
   if (DEACTIVATION_PATTERNS.some((re) => re.test(prompt))) {
     clearMode();
+    emitBlock(modeConfirmLine('off', false));
     process.exit(0);
     return;
   }
@@ -193,33 +223,13 @@ function main() {
   if (voiceMatch) {
     const action = (voiceMatch[1] || '').toLowerCase();
     const dir = claudeConfigDir();
-    if (action === 'status') {
-      const on = config.isVoiceEnabled(dir);
-      const vs = config.getVoiceSettings();
-      emitBlock(
-        'darkman-x voice: ' + (on ? 'ON' : 'OFF') +
-        ' · model=' + vs.model +
-        ' · voice=' + vs.referenceId
-      );
-      process.exit(0);
-      return;
-    }
     if (action === 'toggle') {
-      const next = !config.isVoiceEnabled(dir);
-      config.setVoiceEnabled(next, dir);
-      emitBlock('darkman-x voice: ' + (next ? 'ON' : 'OFF'));
-      process.exit(0);
-      return;
+      config.setVoiceEnabled(!config.isVoiceEnabled(dir), dir);
+    } else if (action === 'on' || action === 'off') {
+      config.setVoiceEnabled(action === 'on', dir);
     }
-    const enable = action === 'on';
-    config.setVoiceEnabled(enable, dir);
-    emitBlock(
-      enable
-        ? 'darkman-x voice ON — Fish Audio ' + config.DEFAULT_VOICE_MODEL +
-          ' · voice ' + config.DEFAULT_VOICE_ID +
-          '. Set FISH_API_KEY. Speak replies with: node src/tools/darkman-x-speak.js "…"'
-        : 'darkman-x voice OFF'
-    );
+    // 'status' falls through — read-only, no write.
+    emitBlock(voiceStatusLine(dir));
     process.exit(0);
     return;
   }
@@ -244,18 +254,13 @@ function main() {
     if (suffix === 'voice' || arg.startsWith('voice ')) {
       const action = (suffix === 'voice' ? arg : arg.replace(/^voice\s+/, '')).trim().toLowerCase();
       const dir = claudeConfigDir();
-      if (action === 'status' || action === '') {
-        const on = config.isVoiceEnabled(dir);
-        const vs = config.getVoiceSettings();
-        emitBlock('darkman-x voice: ' + (on ? 'ON' : 'OFF') + ' · model=' + vs.model + ' · voice=' + vs.referenceId);
-      } else if (action === 'toggle') {
-        const next = !config.isVoiceEnabled(dir);
-        config.setVoiceEnabled(next, dir);
-        emitBlock('darkman-x voice: ' + (next ? 'ON' : 'OFF'));
+      if (action === 'toggle') {
+        config.setVoiceEnabled(!config.isVoiceEnabled(dir), dir);
       } else if (action === 'on' || action === 'off') {
         config.setVoiceEnabled(action === 'on', dir);
-        emitBlock('darkman-x voice: ' + (action === 'on' ? 'ON' : 'OFF'));
       }
+      // 'status' / '' falls through — read-only, no write.
+      emitBlock(voiceStatusLine(dir));
       process.exit(0);
       return;
     }
@@ -266,6 +271,7 @@ function main() {
 
     if (requestedMode) {
       setMode(requestedMode);
+      emitBlock(modeConfirmLine(requestedMode, config.isVoiceEnabled(claudeConfigDir())));
     }
     process.exit(0);
     return;

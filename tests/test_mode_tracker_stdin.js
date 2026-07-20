@@ -7,6 +7,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -20,12 +21,22 @@ function maybeSkip(t) {
   return false;
 }
 
+// The tracker writes mode/voice flags under $CLAUDE_CONFIG_DIR. Without an
+// explicit override here, the child inherits the real value from this
+// process's env and every "run the hook" test clobbers the actual live
+// session state (mode/voice flags under ~/.claude) as a side effect.
 function runWithStdin(input) {
-  return spawnSync(process.execPath, [trackerPath], {
-    input,
-    encoding: 'utf8',
-    timeout: 5000,
-  });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'darkmanx-tracker-'));
+  try {
+    return spawnSync(process.execPath, [trackerPath], {
+      input,
+      encoding: 'utf8',
+      timeout: 5000,
+      env: { ...process.env, CLAUDE_CONFIG_DIR: dir },
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 test('exits 0 with a well-formed prompt', (t) => {
