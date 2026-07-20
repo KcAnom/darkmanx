@@ -68,3 +68,25 @@ test('exits 0 on a deactivation phrase', (t) => {
   const result = runWithStdin(JSON.stringify({ prompt: 'stop darkman-x' }));
   assert.equal(result.status, 0);
 });
+
+test('/darkman-x ultra (prose mode) blocks with a confirmation', (t) => {
+  if (maybeSkip(t)) return;
+  const result = runWithStdin(JSON.stringify({ prompt: '/darkman-x ultra' }));
+  assert.equal(result.status, 0);
+  const decision = JSON.parse(result.stdout);
+  assert.equal(decision.decision, 'block');
+  assert.match(decision.reason, /darkman-x ultra/);
+});
+
+// Regression: commit/review/compress are one-shot actions, not pure mode
+// switches. Blocking here (like prose-mode switches correctly do) would set
+// the flag and then hand back a bare confirmation instead of letting the
+// prompt reach the model to actually run the review/commit/compress skill.
+for (const mode of ['review', 'commit', 'compress']) {
+  test(`/darkman-x-${mode} passes the prompt through unblocked`, (t) => {
+    if (maybeSkip(t)) return;
+    const result = runWithStdin(JSON.stringify({ prompt: `/darkman-x-${mode}` }));
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '', `expected no block output, got: ${result.stdout}`);
+  });
+}

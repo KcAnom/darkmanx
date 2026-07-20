@@ -273,7 +273,15 @@ function main() {
 
     if (requestedMode) {
       setMode(requestedMode);
-      emitBlock(modeConfirmLine(requestedMode, config.isVoiceEnabled(claudeConfigDir())));
+      // commit/review/compress are one-shot actions, not pure state
+      // switches — the prompt must keep flowing to the model so it
+      // actually performs the action (per commands/darkman-x-<mode>.md).
+      // Blocking here would set the flag and then do nothing else.
+      if (!INDEPENDENT_MODES.has(requestedMode)) {
+        emitBlock(modeConfirmLine(requestedMode, config.isVoiceEnabled(claudeConfigDir())));
+        process.exit(0);
+        return;
+      }
     }
     process.exit(0);
     return;
