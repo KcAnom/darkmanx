@@ -14,8 +14,14 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+
+// Guard: if both global (~/.pi/agent/extensions) and project (.pi/extensions)
+// resolve to the same file, only the first factory runs.
+const GLOBAL_ONCE_KEY = "__darkmanXPiExtensionLoaded";
+const g = globalThis as typeof globalThis & { [GLOBAL_ONCE_KEY]?: boolean };
 
 const VALID_MODES = new Set([
 	"off",
@@ -65,11 +71,57 @@ function xdgConfigHome(): string {
  * Non-destructive: never overwrites keys already set in process.env.
  * Never logs values. Silent-fail on missing/unreadable files.
  */
-function loadPiEnv(cwd: string): { loaded: string[] } {
+/**
+ * Resolve the darkman-x repo root so the extension works from any cwd
+ * (global install under ~/.pi/agent/extensions/ + project-local).
+ */
+function resolveDarkmanRoot(cwd?: string): string {
+	const envRoot = process.env.DARKMANX_ROOT;
+	if (envRoot && fs.existsSync(path.join(envRoot, "skills", "darkman-x", "SKILL.md"))) {
+		return path.resolve(envRoot);
+	}
+
+	// Prefer realpath of this extension file → …/darkmanx/.pi/extensions/darkman-x.ts
+	try {
+		const here = fileURLToPath(import.meta.url);
+		const real = fs.realpathSync(here);
+		const fromExt = path.resolve(path.dirname(real), "..", "..");
+		if (fs.existsSync(path.join(fromExt, "skills", "darkman-x", "SKILL.md"))) {
+			return fromExt;
+		}
+	} catch {
+		// import.meta may be unavailable in some loaders — fall through
+	}
+
+	const start = path.resolve(cwd || process.cwd());
+	let dir = start;
+	for (let i = 0; i < 64; i++) {
+		if (fs.existsSync(path.join(dir, "skills", "darkman-x", "SKILL.md"))) return dir;
+		if (
+			path.basename(dir) === ".pi" &&
+			fs.existsSync(path.join(dir, "skills", "darkman-x", "SKILL.md"))
+		) {
+			return path.dirname(dir);
+		}
+		const parent = path.dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+
+	// Last resort: known checkout path on this machine
+	const fallback = path.join(os.homedir(), "darkmanx");
+	if (fs.existsSync(path.join(fallback, "skills", "darkman-x", "SKILL.md"))) return fallback;
+
+	return start;
+}
+
+function loadPiEnv(cwd: string, repoRoot: string): { loaded: string[] } {
 	const loaded: string[] = [];
 	const candidates = [
-		path.join(cwd, ".pi", "darkman-x-pi.env"), // Pi owns this
-		path.join(cwd, ".env"), // root fallback
+		path.join(repoRoot, ".pi", "darkman-x-pi.env"), // Pi-dedicated (always, even if cwd elsewhere)
+		path.join(cwd, ".pi", "darkman-x-pi.env"),
+		path.join(cwd, ".env"),
+		path.join(repoRoot, ".env"),
 		path.join(xdgConfigHome(), "darkman-x", ".env"),
 	];
 	const seen = new Set<string>();
@@ -202,11 +254,13 @@ function resolveVoiceDefault(): boolean {
 	return false;
 }
 
-function skillCandidates(cwd: string): string[] {
+function skillCandidates(cwd: string, repoRoot: string): string[] {
 	return [
+		path.join(repoRoot, "skills", "darkman-x", "SKILL.md"),
+		path.join(repoRoot, ".pi", "skills", "darkman-x", "SKILL.md"),
+		path.join(repoRoot, "plugins", "darkman-x", "skills", "darkman-x", "SKILL.md"),
 		path.join(cwd, "skills", "darkman-x", "SKILL.md"),
 		path.join(cwd, ".pi", "skills", "darkman-x", "SKILL.md"),
-		path.join(cwd, "plugins", "darkman-x", "skills", "darkman-x", "SKILL.md"),
 	];
 }
 
@@ -251,10 +305,10 @@ function filterIntensityTable(body: string, mode: string): string {
 	return out.join("\n");
 }
 
-function loadModeRules(cwd: string, mode: string): string {
+function loadModeRules(cwd: string, repoRoot: string, mode: string): string {
 	if (mode === "off") return "";
 
-	for (const p of skillCandidates(cwd)) {
+	for (const p of skillCandidates(cwd, repoRoot)) {
 		try {
 			if (!fs.existsSync(p)) continue;
 			const raw = fs.readFileSync(p, "utf8");
@@ -296,10 +350,11 @@ function writeVoiceFlag(enabled: boolean): void {
 	}
 }
 
-function speakPath(cwd: string): string | null {
+function speakPath(cwd: string, repoRoot: string): string | null {
 	const candidates = [
+		path.join(repoRoot, "src", "tools", "darkman-x-speak.js"),
 		path.join(cwd, "src", "tools", "darkman-x-speak.js"),
-		path.join(cwd, "bin", "darkman-x-speak.js"),
+		path.join(repoRoot, "bin", "darkman-x-speak.js"),
 	];
 	for (const p of candidates) {
 		if (fs.existsSync(p)) return p;
@@ -307,12 +362,12 @@ function speakPath(cwd: string): string | null {
 	return null;
 }
 
-function trySpeak(cwd: string, text: string): void {
-	const script = speakPath(cwd);
+function trySpeak(cwd: string, repoRoot: string, text: string): void {
+	const script = speakPath(cwd, repoRoot);
 	if (!script) return;
 	try {
-		spawnSync(process.execPath, [script, text], {
-			cwd,
+		spawnSync(process.execPath, [script, "--quiet", "--", text], {
+			cwd: repoRoot,
 			stdio: "ignore",
 			timeout: 30_000,
 			env: process.env,
@@ -342,16 +397,23 @@ function normalizeMode(raw: string): string | null {
 }
 
 export default function darkmanXExtension(pi: ExtensionAPI) {
+	if (g[GLOBAL_ONCE_KEY]) {
+		// Already registered (global + project both pointed here).
+		return;
+	}
+	g[GLOBAL_ONCE_KEY] = true;
+
 	const state: State = {
 		mode: "full",
 		prevMode: "full",
 		voice: false,
 	};
 	let cwd = process.cwd();
+	let repoRoot = resolveDarkmanRoot(cwd);
 	let rulesCache = "";
 
 	function refreshRules(): void {
-		rulesCache = state.mode === "off" ? "" : loadModeRules(cwd, state.mode);
+		rulesCache = state.mode === "off" ? "" : loadModeRules(cwd, repoRoot, state.mode);
 	}
 
 	function applyMode(next: string, ctx: ExtensionContext, opts?: { silent?: boolean }): void {
@@ -405,9 +467,10 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 	// Restore session state if present
 	pi.on("session_start", async (_event, ctx) => {
 		cwd = ctx.cwd || process.cwd();
+		repoRoot = resolveDarkmanRoot(cwd);
 
-		// Pi grabs its own env first (.pi/darkman-x-pi.env), then root .env fallback
-		const envInfo = loadPiEnv(cwd);
+		// Pi-dedicated env first (repo .pi/darkman-x-pi.env), then cwd/root fallbacks
+		const envInfo = loadPiEnv(cwd, repoRoot);
 		if (envInfo.loaded.some((f) => f.endsWith("darkman-x-pi.env"))) {
 			ctx.ui.notify(
 				hasUsableFishKey()
@@ -415,6 +478,8 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 					: "darkman-x-pi.env loaded — paste FISH_API_KEY into .pi/darkman-x-pi.env",
 				hasUsableFishKey() ? "info" : "warning",
 			);
+		} else if (!hasUsableFishKey()) {
+			// only nudge when voice is on and key missing
 		}
 
 		const defaultMode = resolveDefaultMode(cwd);
@@ -443,7 +508,8 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 
 		const vs = voiceSettings();
 		// Match Claude SessionStart voiceRulesBlock (ccfa86f): full reply, not a 2-sentence cap.
-		const tool = speakPath(cwd) || path.join(cwd, "src", "tools", "darkman-x-speak.js");
+		const tool =
+			speakPath(cwd, repoRoot) || path.join(repoRoot, "src", "tools", "darkman-x-speak.js");
 		const voiceBlock = state.voice
 			? [
 					"",
@@ -560,7 +626,7 @@ ${voiceBlock}
 			} else if (sub === "status") {
 				// fall through to notify
 			} else if (sub === "test") {
-				trySpeak(cwd, "darkman-x voice test. Short. Hard. Exact.");
+				trySpeak(cwd, repoRoot, "darkman-x voice test. Short. Hard. Exact.");
 				ctx.ui.notify(`voice test sent · model ${vs.model}`, "info");
 				return;
 			} else {
