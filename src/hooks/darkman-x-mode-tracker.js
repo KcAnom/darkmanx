@@ -35,6 +35,9 @@ const NL_ACTIVATION_PATTERNS = [
 ];
 
 const MODE_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-([a-z-]+))?(?:\s+(.+))?\s*$/i;
+const VOICE_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-voice)?\s+voice\s+(on|off|status|toggle)\s*$/i;
+const VOICE_NL_ON = [/\benable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?on\b/i, /\bspeak (?:replies|responses|out loud)\b/i];
+const VOICE_NL_OFF = [/\bdisable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?off\b/i, /\bstop speaking\b/i, /\bmute voice\b/i];
 const STATS_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?-stats\b(.*)$/i;
 
 function claudeConfigDir() {
@@ -183,10 +186,80 @@ function main() {
     return;
   }
 
+
+  // /darkman-x voice on|off|status|toggle  (also /darkman-x-voice on|off)
+  const voiceMatch = prompt.match(VOICE_COMMAND_RE) ||
+    prompt.match(/^\s*\/darkman-x-voice\s+(on|off|status|toggle)\s*$/i);
+  if (voiceMatch) {
+    const action = (voiceMatch[1] || '').toLowerCase();
+    const dir = claudeConfigDir();
+    if (action === 'status') {
+      const on = config.isVoiceEnabled(dir);
+      const vs = config.getVoiceSettings();
+      emitBlock(
+        'darkman-x voice: ' + (on ? 'ON' : 'OFF') +
+        ' · model=' + vs.model +
+        ' · voice=' + vs.referenceId
+      );
+      process.exit(0);
+      return;
+    }
+    if (action === 'toggle') {
+      const next = !config.isVoiceEnabled(dir);
+      config.setVoiceEnabled(next, dir);
+      emitBlock('darkman-x voice: ' + (next ? 'ON' : 'OFF'));
+      process.exit(0);
+      return;
+    }
+    const enable = action === 'on';
+    config.setVoiceEnabled(enable, dir);
+    emitBlock(
+      enable
+        ? 'darkman-x voice ON — Fish Audio ' + config.DEFAULT_VOICE_MODEL +
+          ' · voice ' + config.DEFAULT_VOICE_ID +
+          '. Set FISH_API_KEY. Speak replies with: node src/tools/darkman-x-speak.js "…"'
+        : 'darkman-x voice OFF'
+    );
+    process.exit(0);
+    return;
+  }
+
+  if (VOICE_NL_ON.some((re) => re.test(prompt))) {
+    config.setVoiceEnabled(true, claudeConfigDir());
+    process.exit(0);
+    return;
+  }
+  if (VOICE_NL_OFF.some((re) => re.test(prompt))) {
+    config.setVoiceEnabled(false, claudeConfigDir());
+    process.exit(0);
+    return;
+  }
+
   const modeMatch = prompt.match(MODE_COMMAND_RE);
   if (modeMatch) {
     const suffix = (modeMatch[1] || '').toLowerCase();
     const arg = (modeMatch[2] || '').trim().toLowerCase();
+
+    // /darkman-x-voice on|off  or  /darkman-x voice on|off  (suffix path)
+    if (suffix === 'voice' || arg.startsWith('voice ')) {
+      const action = (suffix === 'voice' ? arg : arg.replace(/^voice\s+/, '')).trim().toLowerCase();
+      const dir = claudeConfigDir();
+      if (action === 'status' || action === '') {
+        const on = config.isVoiceEnabled(dir);
+        const vs = config.getVoiceSettings();
+        emitBlock('darkman-x voice: ' + (on ? 'ON' : 'OFF') + ' · model=' + vs.model + ' · voice=' + vs.referenceId);
+      } else if (action === 'toggle') {
+        const next = !config.isVoiceEnabled(dir);
+        config.setVoiceEnabled(next, dir);
+        emitBlock('darkman-x voice: ' + (next ? 'ON' : 'OFF'));
+      } else if (action === 'on' || action === 'off') {
+        config.setVoiceEnabled(action === 'on', dir);
+        emitBlock('darkman-x voice: ' + (action === 'on' ? 'ON' : 'OFF'));
+      }
+      process.exit(0);
+      return;
+    }
+
     const requestedMode = suffix && config.VALID_MODES.includes(suffix)
       ? suffix
       : (arg && config.VALID_MODES.includes(arg) ? arg : null);

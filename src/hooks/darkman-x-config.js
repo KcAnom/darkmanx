@@ -23,6 +23,10 @@ const VALID_MODES = [
 ];
 
 const MODE_LOG_BASENAME = '.darkman-x-mode-log.jsonl';
+const VOICE_FLAG_BASENAME = '.darkman-x-voice';
+const DEFAULT_VOICE_ID = '552fdfe0e4f542c1bb381d1006c1ac9b';
+const DEFAULT_VOICE_MODEL = 's2.1-pro';
+
 
 function debugLog(...args) {
   if (process.env.DARKMANX_DEBUG === '1') {
@@ -205,9 +209,68 @@ function readHistory(configDir) {
     .filter(Boolean);
 }
 
+
+function voiceFlagPath(configDir) {
+  // Prefer Claude config dir when CLAUDE_CONFIG_DIR is set (session flags),
+  // else fall back to the XDG darkman-x config dir for standalone CLI use.
+  const dir = configDir || process.env.CLAUDE_CONFIG_DIR || getConfigDir();
+  // Session flags live next to other .darkman-x-* flags under CLAUDE_CONFIG_DIR
+  // when provided; for XDG config we still write a simple flag file.
+  if (configDir || process.env.CLAUDE_CONFIG_DIR) {
+    return path.join(dir, VOICE_FLAG_BASENAME);
+  }
+  return path.join(getConfigDir(), VOICE_FLAG_BASENAME);
+}
+
+function isVoiceEnabled(configDir) {
+  const env = process.env.DARKMANX_VOICE;
+  if (env === '0' || env === 'off' || env === 'false') return false;
+  if (env === '1' || env === 'on' || env === 'true') return true;
+
+  const flagPath = voiceFlagPath(configDir);
+  const raw = (readFlag(flagPath) || '').trim().toLowerCase();
+  if (raw === 'on' || raw === '1' || raw === 'true') return true;
+  if (raw === 'off' || raw === '0' || raw === 'false') return false;
+
+  // Optional default from user config.json: { "voice": { "enabled": true } }
+  const userConfig = readJsonSafe(getConfigPath());
+  if (userConfig && userConfig.voice && typeof userConfig.voice.enabled === 'boolean') {
+    return userConfig.voice.enabled;
+  }
+  return false;
+}
+
+function setVoiceEnabled(enabled, configDir) {
+  const flagPath = voiceFlagPath(configDir);
+  return safeWriteFlag(flagPath, enabled ? 'on' : 'off');
+}
+
+function getVoiceSettings() {
+  const userConfig = readJsonSafe(getConfigPath()) || {};
+  const v = (userConfig && userConfig.voice) || {};
+  return {
+    enabled: isVoiceEnabled(),
+    referenceId:
+      process.env.DARKMANX_VOICE_ID ||
+      v.referenceId ||
+      v.voiceId ||
+      DEFAULT_VOICE_ID,
+    model:
+      process.env.DARKMANX_VOICE_MODEL ||
+      v.model ||
+      DEFAULT_VOICE_MODEL,
+    format: process.env.DARKMANX_VOICE_FORMAT || v.format || 'mp3',
+    play: process.env.DARKMANX_VOICE_PLAY === '0' ? false : (v.play !== false),
+    speed: v.speed != null ? Number(v.speed) : null,
+  };
+}
+
 module.exports = {
   VALID_MODES,
   MODE_LOG_BASENAME,
+  VOICE_FLAG_BASENAME,
+  DEFAULT_VOICE_ID,
+  DEFAULT_VOICE_MODEL,
   getDefaultMode,
   getConfigDir,
   getConfigPath,
@@ -217,4 +280,8 @@ module.exports = {
   appendFlag,
   recordModeChange,
   readHistory,
+  voiceFlagPath,
+  isVoiceEnabled,
+  setVoiceEnabled,
+  getVoiceSettings,
 };

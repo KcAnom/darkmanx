@@ -10,7 +10,8 @@ must never block a Claude Code session from starting.
 | `darkman-x-mode-tracker.js` | UserPromptSubmit | Parses `/darkman-x*` commands and natural-language activation/deactivation phrases, switches modes, runs `/darkman-x-stats` |
 | `darkman-x-stats.js` | (invoked by mode-tracker, or standalone) | Estimates output-token savings from local transcript logs + mode-change history |
 | `xcrew-model-overrides.js` | (invoked by activate) | Rewrites `agents/xcrew-*.md` frontmatter `model:` field from env vars |
-| `darkman-x-statusline.sh` / `.ps1` | statusLine | Prints the `[DARKMAN-X]` badge + savings suffix |
+| `darkman-x-statusline.sh` / `.ps1` | statusLine | Prints the `[DARKMAN-X]` badge, optional `+VOICE`, + savings suffix |
+| `../tools/darkman-x-speak.js` | (CLI) | Fish Audio S2.1-Pro TTS for darkman-x spoken replies |
 
 ## Env vars
 
@@ -21,6 +22,11 @@ must never block a Claude Code session from starting.
 | `DARKMANX_STATUSLINE_SAVINGS=0` | Hide the savings suffix in the statusline |
 | `DARKMANX_DEBUG=1` | Print swallowed errors to stderr |
 | `XCREW_INVESTIGATOR_MODEL` / `XCREW_BUILDER_MODEL` / `XCREW_REVIEWER_MODEL` | Override each xcrew subagent's model |
+| `FISH_API_KEY` | Fish Audio API key for spoken replies (`darkman-x-speak`) |
+| `DARKMANX_VOICE=on\|off` | Force voice toggle (overrides flag file) |
+| `DARKMANX_VOICE_ID` | Override default Fish voice reference id |
+| `DARKMANX_VOICE_MODEL` | Override TTS model (default `s2.1-pro`) |
+| `DARKMANX_VOICE_PLAY=0` | Write audio file but skip local playback |
 
 ## Install
 

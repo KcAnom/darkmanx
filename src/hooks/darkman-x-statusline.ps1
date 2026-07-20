@@ -25,4 +25,14 @@ if ($savingsEnv -ne '0' -and (Test-Path $suffixFile)) {
     if ($null -eq $suffix) { $suffix = '' }
 }
 
-Write-Host -NoNewline "$badge$suffix"
+$voiceFile = Join-Path $configDir '.darkman-x-voice'
+$voiceBadge = ''
+if (Test-Path $voiceFile) {
+  $vs = (Get-Content $voiceFile -Raw -ErrorAction SilentlyContinue)
+  if ($null -ne $vs) {
+    $vs = $vs.Trim().ToLower()
+    if ($vs -eq 'on' -or $vs -eq '1' -or $vs -eq 'true') { $voiceBadge = '+VOICE' }
+  }
+}
+
+Write-Host -NoNewline "$badge$voiceBadge$suffix"

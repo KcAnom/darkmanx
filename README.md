@@ -60,6 +60,26 @@ Switch anytime: `/darkman-x lite|full|ultra|wenyan…`. Say "stop darkman-x" or 
 
 darkman-x drops out automatically for: security warnings, irreversible confirmations, ambiguous multi-step requests, or when you seem confused. Code, commits, and PR descriptions are always written in normal voice — compression is for conversational output only.
 
+## Optional spoken voice (Fish Audio)
+
+Speak darkman-x replies out loud with **Fish Audio `s2.1-pro`** and fixed voice id `552fdfe0e4f542c1bb381d1006c1ac9b`.
+
+```bash
+export FISH_API_KEY=your_key_here
+
+# Toggle (session flag + statusline +VOICE)
+/darkman-x voice on
+/darkman-x voice status
+/darkman-x voice off
+
+# One-shot speak (no toggle required)
+npx darkman-x-speak "Port taken. Server dead. Change port or kill it."
+# or from a checkout:
+node src/tools/darkman-x-speak.js --dry-run "test"
+```
+
+When voice is ON, SessionStart injects a rule so the agent speaks a short summary after conversational replies (never code/commits/PRs). Missing `FISH_API_KEY` → speak is skipped, never blocks the session.
+
 ## Privacy
 
 No SaaS backend. No accounts. No telemetry. No phone-home. `/darkman-x-stats` reads your own local session logs — nothing leaves your machine. See [`SECURITY.md`](./SECURITY.md).

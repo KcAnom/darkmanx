@@ -26,4 +26,13 @@ if [ "${DARKMANX_STATUSLINE_SAVINGS:-1}" != "0" ] && [ -f "$suffix_file" ]; then
   suffix="$(cat "$suffix_file" 2>/dev/null)"
 fi
 
-printf '%s%s' "$badge" "$suffix"
+voice_file="$config_dir/.darkman-x-voice"
+voice_badge=""
+if [ -f "$voice_file" ]; then
+  voice_state="$(cat "$voice_file" 2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+  if [ "$voice_state" = "on" ] || [ "$voice_state" = "1" ] || [ "$voice_state" = "true" ]; then
+    voice_badge="+VOICE"
+  fi
+fi
+
+printf '%s%s%s' "$badge" "$voice_badge" "$suffix"

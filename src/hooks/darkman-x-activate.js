@@ -99,6 +99,49 @@ function filterIntensityTable(body, mode) {
   return out.join('\n');
 }
 
+
+function speakToolPath() {
+  const candidates = [
+    path.join(__dirname, '..', 'tools', 'darkman-x-speak.js'),
+    path.join(__dirname, '..', '..', 'src', 'tools', 'darkman-x-speak.js'),
+  ];
+  if (process.env.CLAUDE_PLUGIN_ROOT) {
+    candidates.unshift(path.join(process.env.CLAUDE_PLUGIN_ROOT, 'src', 'tools', 'darkman-x-speak.js'));
+  }
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  return candidates[candidates.length - 1];
+}
+
+function voiceRulesBlock() {
+  try {
+    if (!config.isVoiceEnabled(claudeConfigDir())) return '';
+    const vs = config.getVoiceSettings();
+    const tool = speakToolPath();
+    return [
+      '',
+      '## Voice (Fish Audio — ON)',
+      'Spoken replies are enabled for this session.',
+      '- Model: `' + vs.model + '`',
+      '- Voice reference_id: `' + vs.referenceId + '`',
+      '- After each conversational reply (not code/commits/PRs), speak a short spoken summary by running:',
+      '  `node "' + tool + '" --quiet -- "YOUR SHORT SPOKEN SUMMARY"`',
+      '- Keep the spoken summary under ~2 sentences. Do not read code blocks aloud.',
+      '- If FISH_API_KEY is missing, skip speaking silently — do not fail the turn.',
+      '- Toggle: `/darkman-x voice off` or say "stop speaking".',
+      '',
+    ].join('\n');
+  } catch (err) {
+    debugLog('voice rules skipped -', err.message);
+    return '';
+  }
+}
+
 function loadSkillRules(mode) {
   for (const candidate of skillCandidatePaths()) {
     try {
@@ -157,7 +200,7 @@ function main() {
   }
 
   const rules = loadSkillRules(mode) || FALLBACK_RULES;
-  process.stdout.write(rules + '\n');
+  process.stdout.write(rules + voiceRulesBlock() + '\n');
 
   maybeNudgeStatusline(configDir);
 

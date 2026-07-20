@@ -1,13 +1,14 @@
 {
   "name": "darkman-x-installer",
   "version": "0.1.0",
-  "description": "Multi-agent skill/plugin installer for darkman-x — token-compressed agent speech, hooks, xcrew subagents, MCP shrink.",
+  "description": "Multi-agent skill/plugin installer for darkman-x \u2014 token-compressed agent speech, hooks, xcrew subagents, MCP shrink.",
   "license": "MIT",
   "engines": {
     "node": ">=18"
   },
   "bin": {
-    "darkman-x": "./bin/install.js"
+    "darkman-x": "./bin/install.js",
+    "darkman-x-speak": "./src/tools/darkman-x-speak.js"
   },
   "files": [
     "bin/",
