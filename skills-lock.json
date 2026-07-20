@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "darkman-x": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "darkman-x-commit": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x-commit",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "darkman-x-review": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x-review",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "darkman-x-help": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x-help",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "darkman-x-stats": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x-stats",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "xcrew": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/xcrew",
+      "computedHash": "TODO-recompute-on-release"
+    },
+    "darkman-x-compress": {
+      "source": "github:OWNER/darkman-x",
+      "skillPath": "skills/darkman-x-compress",
+      "computedHash": "TODO-recompute-on-release"
+    }
+  }
+}

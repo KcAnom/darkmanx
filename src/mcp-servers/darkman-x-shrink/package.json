@@ -1,0 +1,13 @@
+{
+  "name": "darkman-x-shrink",
+  "version": "0.1.1",
+  "description": "Stdio MCP proxy that compresses tool/prompt/resource description fields to cut context tokens.",
+  "license": "MIT",
+  "main": "index.js",
+  "bin": {
+    "darkman-x-shrink": "./index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,48 @@
+name: sync-skill
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'agents/**'
+      - 'skills/darkman-x-compress/scripts/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync agents mirror
+        run: |
+          mkdir -p plugins/darkman-x/agents
+          cp -f agents/xcrew-*.md plugins/darkman-x/agents/
+
+      - name: Sync skills mirror
+        run: |
+          mkdir -p plugins/darkman-x/skills
+          for skill in darkman-x darkman-x-commit darkman-x-review darkman-x-help darkman-x-stats xcrew darkman-x-compress; do
+            rm -rf "plugins/darkman-x/skills/$skill"
+            cp -r "skills/$skill" "plugins/darkman-x/skills/$skill"
+          done
+
+      - name: Build dist/darkman-x.skill
+        run: |
+          mkdir -p dist
+          rm -f dist/darkman-x.skill
+          cd skills/darkman-x && zip -r ../../dist/darkman-x.skill . -x '*.DS_Store'
+
+      - name: Commit mirrors
+        run: |
+          git config user.name "darkman-x-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add plugins/darkman-x
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync skill/agent mirrors [skip ci]"
+            git push
+          else
+            echo "No mirror changes to commit."
+          fi

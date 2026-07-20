@@ -1,0 +1,6 @@
+{
+  "name": "darkman-x",
+  "version": "0.1.0",
+  "description": "Darkman X / DMX-energy compressed agent speech, xcrew subagents, and memory-file compress for Codex.",
+  "hooks": "../../.codex/hooks.json"
+}

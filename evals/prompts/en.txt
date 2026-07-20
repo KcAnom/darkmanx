@@ -1,0 +1,5 @@
+Review this function for bugs: function getUser(id) { return users[id].name; }
+I'm getting 'Cannot read properties of undefined (reading map)' — what's wrong and how do I fix it?
+This function is 200 lines long and does five different things. How should I split it up?
+Summarize what this diff changes and whether it's safe to merge.
+Explain why this test is flaky and how to fix it.

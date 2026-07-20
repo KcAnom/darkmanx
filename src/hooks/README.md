@@ -1,0 +1,36 @@
+# darkman-x hooks
+
+Node stdlib only, CommonJS. Every entry point silent-fails — a hook error
+must never block a Claude Code session from starting.
+
+| File | Event | Purpose |
+|---|---|---|
+| `darkman-x-config.js` | (shared module) | Mode resolution, config paths, atomic/symlink-safe flag writes, mode-change history |
+| `darkman-x-activate.js` | SessionStart | Applies xcrew model overrides, resolves the active mode, loads `skills/darkman-x/SKILL.md` rules (filtered to the active intensity) into session context |
+| `darkman-x-mode-tracker.js` | UserPromptSubmit | Parses `/darkman-x*` commands and natural-language activation/deactivation phrases, switches modes, runs `/darkman-x-stats` |
+| `darkman-x-stats.js` | (invoked by mode-tracker, or standalone) | Estimates output-token savings from local transcript logs + mode-change history |
+| `xcrew-model-overrides.js` | (invoked by activate) | Rewrites `agents/xcrew-*.md` frontmatter `model:` field from env vars |
+| `darkman-x-statusline.sh` / `.ps1` | statusLine | Prints the `[DARKMAN-X]` badge + savings suffix |
+
+## Env vars
+
+| Var | Effect |
+|---|---|
+| `CLAUDE_CONFIG_DIR` | Claude config root (default `~/.claude`) |
+| `DARKMANX_DEFAULT_MODE` | Force a default mode (or `off`) |
+| `DARKMANX_STATUSLINE_SAVINGS=0` | Hide the savings suffix in the statusline |
+| `DARKMANX_DEBUG=1` | Print swallowed errors to stderr |
+| `XCREW_INVESTIGATOR_MODEL` / `XCREW_BUILDER_MODEL` / `XCREW_REVIEWER_MODEL` | Override each xcrew subagent's model |
+
+## Install
+
+Prefer the repo-root installer:
+
+```bash
+node ../../bin/install.js --only claude
+```
+
+`install.sh` / `install.ps1` in this directory are standalone fallbacks that
+copy these files into `$CLAUDE_CONFIG_DIR/hooks` and wire `settings.json`
+directly, for when you want the hooks without the rest of the product.
+`uninstall.sh` / `uninstall.ps1` reverse that.

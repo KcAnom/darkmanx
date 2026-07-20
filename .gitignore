@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.local
+.env.*.local
+__pycache__/
+*.pyc
+.pytest_cache/
+darkman-x-compress/backups/
+benchmarks/results/*.json
+!benchmarks/results/.gitkeep
+.claude/settings.local.json

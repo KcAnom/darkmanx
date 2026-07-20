@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "darkman-x-marketplace",
+  "owner": {
+    "name": "darkman-x"
+  },
+  "plugins": [
+    {
+      "name": "darkman-x",
+      "source": "./",
+      "description": "Make AI coding agents talk like Darkman X — short, hard, ~65% fewer output tokens.",
+      "category": "productivity"
+    }
+  ]
+}

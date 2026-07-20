@@ -1,0 +1,9 @@
+{
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "matcher": "startup|resume",
+      "command": "echo 'darkman-x: talk short, hard, exact — drop filler/articles/hedging, keep code/commands/errors byte-exact. /darkman-x <mode> to switch, stop darkman-x to disable.'"
+    }
+  ]
+}

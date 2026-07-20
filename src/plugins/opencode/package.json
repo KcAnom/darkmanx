@@ -1,0 +1,7 @@
+{
+  "name": "darkman-x-opencode-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode plugin: activates darkman-x terse mode, tracks mode changes, reinforces the active mode in the system prompt."
+}
