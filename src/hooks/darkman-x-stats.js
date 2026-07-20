@@ -60,9 +60,12 @@ function parseArgs(argv) {
   return args;
 }
 
+function claudeConfigDir() {
+  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+}
+
 function claudeProjectsDir() {
-  const configDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
-  return path.join(configDir, 'projects');
+  return path.join(claudeConfigDir(), 'projects');
 }
 
 function listTranscriptFiles(args) {
@@ -207,8 +210,10 @@ function formatStats(stats, opts) {
 
 function writeStatuslineSuffix(stats) {
   const suffix = stats.sampleCount > 0 ? ` (~${stats.savingsPct}% saved)` : '';
+  // Must match the dir darkman-x-statusline.sh actually reads
+  // ($CLAUDE_CONFIG_DIR, default ~/.claude) — not the XDG config dir.
   config.safeWriteFlag(
-    path.join(config.getConfigDir(), '.darkman-x-statusline-suffix'),
+    path.join(claudeConfigDir(), '.darkman-x-statusline-suffix'),
     suffix
   );
 }
@@ -230,7 +235,10 @@ function main() {
     allEntries = allEntries.concat(readUsageEntries(f, sinceMs));
   }
 
-  const history = config.readHistory(config.getConfigDir());
+  // Mode-change history is written under the Claude config dir (see
+  // recordModeChange calls in darkman-x-mode-tracker.js / darkman-x-activate.js),
+  // not the XDG darkman-x config dir — that's a separate, standalone-CLI concern.
+  const history = config.readHistory(claudeConfigDir());
   const stats = estimateSavings(allEntries, history);
 
   writeStatuslineSuffix(stats);
