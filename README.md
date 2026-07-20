@@ -62,7 +62,7 @@ darkman-x drops out automatically for: security warnings, irreversible confirmat
 
 ## Optional spoken voice (Fish Audio)
 
-Speak darkman-x replies out loud with **Fish Audio `s2.1-pro`** and fixed voice id `552fdfe0e4f542c1bb381d1006c1ac9b`.
+Speak darkman-x replies out loud with **Fish Audio `s2.1-pro-free`** and fixed voice id `552fdfe0e4f542c1bb381d1006c1ac9b`.
 
 ```bash
 export FISH_API_KEY=your_key_here

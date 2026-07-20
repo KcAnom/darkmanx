@@ -1,2 +1,2 @@
 description = "Switch darkman-x intensity, or turn it off."
-prompt = "Set darkman-x mode to `{{args}}` (default `full`). If args start with voice, toggle Fish Audio spoken replies (s2.1-pro + voice 552fdfe0e4f542c1bb381d1006c1ac9b) and confirm voice state only. Else load skills/darkman-x/SKILL.md, apply intensity, confirm mode only."
+prompt = "Set darkman-x mode to `{{args}}` (default `full`). If args start with voice, toggle Fish Audio spoken replies (s2.1-pro-free + voice 552fdfe0e4f542c1bb381d1006c1ac9b) and confirm voice state only. Else load skills/darkman-x/SKILL.md, apply intensity, confirm mode only."

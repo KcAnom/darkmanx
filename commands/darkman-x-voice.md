@@ -5,7 +5,7 @@ argument-hint: "[on|off|status|toggle]"
 
 Set darkman-x **voice** to `{{args}}` (default `status` if no argument).
 
-- `on` — enable spoken replies via Fish Audio `s2.1-pro` with voice `552fdfe0e4f542c1bb381d1006c1ac9b`.
+- `on` — enable spoken replies via Fish Audio `s2.1-pro-free` with voice `552fdfe0e4f542c1bb381d1006c1ac9b`.
 - `off` — disable spoken replies.
 - `toggle` — flip current state.
 - `status` — print ON/OFF + model + voice id.

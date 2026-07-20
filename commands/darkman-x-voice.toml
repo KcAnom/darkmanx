@@ -1,2 +1,2 @@
 description = "Toggle Fish Audio spoken replies for darkman-x (S2.1-Pro + fixed voice)."
-prompt = "Set darkman-x voice to `{{args}}` (default status). on/off/toggle/status. Uses Fish Audio s2.1-pro + voice 552fdfe0e4f542c1bb381d1006c1ac9b. Requires FISH_API_KEY. Confirm the voice state only — do not restate the whole skill."
+prompt = "Set darkman-x voice to `{{args}}` (default status). on/off/toggle/status. Uses Fish Audio s2.1-pro-free + voice 552fdfe0e4f542c1bb381d1006c1ac9b. Requires FISH_API_KEY. Confirm the voice state only — do not restate the whole skill."

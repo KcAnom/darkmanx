@@ -38,7 +38,7 @@ test('config voice helpers default off and toggle on', () => {
     assert.equal(config.setVoiceEnabled(false, dir), true);
     assert.equal(config.isVoiceEnabled(dir), false);
     assert.equal(config.DEFAULT_VOICE_ID, '552fdfe0e4f542c1bb381d1006c1ac9b');
-    assert.equal(config.DEFAULT_VOICE_MODEL, 's2.1-pro');
+    assert.equal(config.DEFAULT_VOICE_MODEL, 's2.1-pro-free');
   });
 });
 
@@ -81,7 +81,7 @@ test('speak --dry-run reports default model and voice', () => {
   );
   assert.equal(result.status, 0, result.stderr);
   const data = JSON.parse(result.stdout);
-  assert.equal(data.model, 's2.1-pro');
+  assert.equal(data.model, 's2.1-pro-free');
   assert.equal(data.voice, '552fdfe0e4f542c1bb381d1006c1ac9b');
   assert.equal(data.apiKey, 'set');
   assert.match(data.textPreview, /Port taken/);

@@ -25,7 +25,7 @@ must never block a Claude Code session from starting.
 | `FISH_API_KEY` | Fish Audio API key for spoken replies (`darkman-x-speak`) |
 | `DARKMANX_VOICE=on\|off` | Force voice toggle (overrides flag file) |
 | `DARKMANX_VOICE_ID` | Override default Fish voice reference id |
-| `DARKMANX_VOICE_MODEL` | Override TTS model (default `s2.1-pro`) |
+| `DARKMANX_VOICE_MODEL` | Override TTS model (default `s2.1-pro-free`) |
 | `DARKMANX_VOICE_PLAY=0` | Write audio file but skip local playback |
 
 ## Install

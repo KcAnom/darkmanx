@@ -8,7 +8,7 @@ Switch modes: `/darkman-x lite|full|ultra|wenyan-lite|wenyan|wenyan-ultra`. Stop
 
 ## Optional spoken voice (Fish Audio)
 
-Toggle spoken darkman-x replies with Fish Audio **s2.1-pro** and fixed voice id `552fdfe0e4f542c1bb381d1006c1ac9b`:
+Toggle spoken darkman-x replies with Fish Audio **s2.1-pro-free** and fixed voice id `552fdfe0e4f542c1bb381d1006c1ac9b`:
 
 ```bash
 export FISH_API_KEY=...
@@ -17,4 +17,4 @@ node src/tools/darkman-x-speak.js "Port taken. Server dead."
 /darkman-x voice off
 ```
 
-Statusline shows `+VOICE` when enabled. Config: `~/.config/darkman-x/config.json` → `{ "voice": { "enabled": false, "referenceId": "552fdfe0e4f542c1bb381d1006c1ac9b", "model": "s2.1-pro" } }`.
+Statusline shows `+VOICE` when enabled. Config: `~/.config/darkman-x/config.json` → `{ "voice": { "enabled": false, "referenceId": "552fdfe0e4f542c1bb381d1006c1ac9b", "model": "s2.1-pro-free" } }`.

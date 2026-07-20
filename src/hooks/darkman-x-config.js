@@ -25,7 +25,7 @@ const VALID_MODES = [
 const MODE_LOG_BASENAME = '.darkman-x-mode-log.jsonl';
 const VOICE_FLAG_BASENAME = '.darkman-x-voice';
 const DEFAULT_VOICE_ID = '552fdfe0e4f542c1bb381d1006c1ac9b';
-const DEFAULT_VOICE_MODEL = 's2.1-pro';
+const DEFAULT_VOICE_MODEL = 's2.1-pro-free';
 
 
 function debugLog(...args) {

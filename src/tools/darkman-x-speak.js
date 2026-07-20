@@ -12,7 +12,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const DEFAULT_VOICE_ID = '552fdfe0e4f542c1bb381d1006c1ac9b';
-const DEFAULT_MODEL = 's2.1-pro';
+const DEFAULT_MODEL = 's2.1-pro-free';
 const API_URL = 'https://api.fish.audio/v1/tts';
 
 const config = (() => {
@@ -114,7 +114,7 @@ function usage(exitCode) {
     '  --out <path>         Write audio to this path (default: temp file)',
     '  --no-play            Skip local playback',
     '  --play               Force local playback (default when TTY)',
-    '  --model <id>         TTS model header (default: s2.1-pro)',
+    '  --model <id>         TTS model header (default: s2.1-pro-free)',
     '  --voice <id>         reference_id / voice model id',
     '  --format <fmt>       mp3|wav|opus|pcm (default: mp3)',
     '  --speed <n>          Prosody speed 0.5–2.0',
@@ -125,7 +125,7 @@ function usage(exitCode) {
     'Env:',
     '  FISH_API_KEY              required',
     '  DARKMANX_VOICE_ID         override default voice id',
-    '  DARKMANX_VOICE_MODEL      override default model (s2.1-pro)',
+    '  DARKMANX_VOICE_MODEL      override default model (s2.1-pro-free)',
     '  DARKMANX_VOICE_FORMAT     override format',
     '  DARKMANX_VOICE_PLAY=0     disable auto-play',
     '  DARKMANX_DEBUG=1          verbose logs',
