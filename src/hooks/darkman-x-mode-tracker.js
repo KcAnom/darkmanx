@@ -132,10 +132,12 @@ function voiceStatusLine(dir) {
 
 function statusLine(dir) {
   const mode = (config.readFlag(activeFlagPath()) || 'off').trim() || 'off';
-  const prev = (config.readFlag(prevFlagPath()) || '').trim();
+  // Always print prev= (default 'full', matching the Pi extension's initial
+  // state.prevMode) so the two surfaces are byte-identical, not just same-shape.
+  const prev = (config.readFlag(prevFlagPath()) || '').trim() || 'full';
   const on = config.isVoiceEnabled(dir);
   const vs = config.getVoiceSettings();
-  return 'mode=' + mode + (prev ? ' prev=' + prev : '') + ' voice=' + (on ? 'ON' : 'OFF') + ' model=' + vs.model;
+  return 'mode=' + mode + ' prev=' + prev + ' voice=' + (on ? 'ON' : 'OFF') + ' model=' + vs.model;
 }
 
 function runStats(argTail, transcriptPath) {
