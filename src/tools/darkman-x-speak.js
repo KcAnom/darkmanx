@@ -42,7 +42,19 @@ function isUsableApiKey(key) {
 function loadDotEnvFiles() {
   // Non-destructive: only set keys that are not already in process.env.
   // Never logs values. Silent-fail if files are missing or unreadable.
+  // Priority (first file wins per key because later files only fill empty keys):
+  //   1. process env already set
+  //   2. .pi/darkman-x-pi.env  (Pi-dedicated secrets)
+  //   3. repo root .env
+  //   4. ~/.config/darkman-x/.env
   const candidates = [];
+  try {
+    // Pi-dedicated secrets — project-local, independent of root .env
+    candidates.push(path.join(process.cwd(), '.pi', 'darkman-x-pi.env'));
+  } catch (_) {}
+  try {
+    candidates.push(path.join(__dirname, '..', '..', '.pi', 'darkman-x-pi.env'));
+  } catch (_) {}
   try {
     candidates.push(path.join(process.cwd(), '.env'));
   } catch (_) {}
@@ -80,6 +92,8 @@ function loadDotEnvFiles() {
           val = val.slice(1, -1);
         }
         if (!key) continue;
+        // Skip empty / placeholder values so a real key in a later file can win.
+        if (!val || !isUsableApiKey(val)) continue;
         if (process.env[key] === undefined || process.env[key] === '') {
           process.env[key] = val;
         }
@@ -246,13 +260,18 @@ function resolveSettings(opts) {
 }
 
 function stripForSpeech(text) {
-  // Keep conversational content only — drop fenced code, long paths noise.
+  // Keep conversational content only — drop fenced code, inline code, and
+  // markdown syntax so a TTS engine doesn't read literal "asterisk asterisk".
   let t = String(text || '');
   t = t.replace(/```[\s\S]*?```/g, ' ');
   t = t.replace(/`[^`\n]+`/g, ' ');
+  t = t.replace(/^#{1,6}\s+/gm, ''); // headers
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1'); // bold
+  t = t.replace(/(^|\n)\s*[-*]\s+/g, '$1'); // bullet markers
+  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // markdown links -> label only
   t = t.replace(/\s+/g, ' ').trim();
-  // Cap length so one speak call stays snappy.
-  if (t.length > 1200) t = t.slice(0, 1197) + '...';
+  // Sanity cap so a runaway prompt can't produce an unbounded TTS call.
+  if (t.length > 4000) t = t.slice(0, 3997) + '...';
   return t;
 }
 
@@ -390,7 +409,7 @@ async function main() {
 
   if (!apiKey) {
     process.stderr.write(
-      'darkman-x-speak: FISH_API_KEY is not set.\n  Drop it in:  /Users/kc/darkmanx/.env\n           or:  ~/.config/darkman-x/.env\n  Line: FISH_API_KEY=your_key_here\n'
+      'darkman-x-speak: FISH_API_KEY is not set.\n  Pi:   .pi/darkman-x-pi.env\n  Root: .env\n  User: ~/.config/darkman-x/.env\n  Line: FISH_API_KEY=your_key_here\n'
     );
     process.exit(2);
   }

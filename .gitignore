@@ -5,6 +5,8 @@ dist/
 .env
 .env.local
 .env.*.local
+# Pi-dedicated secrets (keep .example tracked)
+.pi/darkman-x-pi.env
 __pycache__/
 *.pyc
 .pytest_cache/
