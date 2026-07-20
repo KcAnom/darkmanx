@@ -142,6 +142,45 @@ function voiceRulesBlock() {
   }
 }
 
+function sfxToolPath() {
+  const candidates = [
+    path.join(__dirname, '..', 'tools', 'darkman-x-sfx.js'),
+    path.join(__dirname, '..', '..', 'src', 'tools', 'darkman-x-sfx.js'),
+  ];
+  if (process.env.CLAUDE_PLUGIN_ROOT) {
+    candidates.unshift(path.join(process.env.CLAUDE_PLUGIN_ROOT, 'src', 'tools', 'darkman-x-sfx.js'));
+  }
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  return candidates[candidates.length - 1];
+}
+
+function sfxRulesBlock() {
+  try {
+    if (!config.isSfxEnabled(claudeConfigDir())) return '';
+    const tool = sfxToolPath();
+    return [
+      '',
+      '## SFX (DMX sound clips — ON, personal use only)',
+      'A small library of DMX audio clips is available, out-of-tree (never committed, never in code/commits/PRs).',
+      '- List what exists: `node "' + tool + '" --list`',
+      '- Play one: `node "' + tool + '" --quiet <clip-name>` (fuzzy match on name, case-insensitive)',
+      '- This is fully your call, not a fixed trigger table. Use real judgment on when a moment earns one — a genuine win, activation, something funny, hype, or just because. No fixed schedule, no per-turn requirement, no held-back clips. Personal machine only — enjoy it, but "every now and then" beats every single reply.',
+      '- Missing/unmatched clip → skip silently, never fail the turn over it.',
+      '- Toggle: `/darkman-x sfx off`.',
+      '',
+    ].join('\n');
+  } catch (err) {
+    debugLog('sfx rules skipped -', err.message);
+    return '';
+  }
+}
+
 function loadSkillRules(mode) {
   for (const candidate of skillCandidatePaths()) {
     try {
@@ -200,7 +239,7 @@ function main() {
   }
 
   const rules = loadSkillRules(mode) || FALLBACK_RULES;
-  process.stdout.write(rules + voiceRulesBlock() + '\n');
+  process.stdout.write(rules + voiceRulesBlock() + sfxRulesBlock() + '\n');
 
   maybeNudgeStatusline(configDir);
 

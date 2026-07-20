@@ -43,6 +43,7 @@ Root `.env` can still exist for other tools. Pi reads its own file first.
 | **Extension** | On `session_start`, loads default mode (`full` unless env/repo/user config says otherwise), injects darkman-x rules via `before_agent_start`, statusline badge. |
 | **`/darkman-x`** | Switch intensity: `off\|lite\|full\|ultra\|wenyan-lite\|wenyan\|wenyan-ultra`. Also `voice on\|off\|status\|toggle`. |
 | **`/darkman-x-voice`** | Fish Audio spoken replies. Default model **`s2.1-pro-free`**, voice id `552fdfe0e4f542c1bb381d1006c1ac9b`. |
+| **`/darkman-x-sfx`** | DMX sound clips, personal use only. Model-judgment triggered (no fixed schedule), never in code/commits/PRs. Clips live out-of-tree at `~/.config/darkman-x/sfx/`, never in this repo. |
 | **Skills** | Symlinked from repo `skills/` — edit source there, not under `.pi/skills/`. |
 | **Prompts** | Pi-native slash templates mirroring `commands/*.md`. |
 

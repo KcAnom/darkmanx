@@ -38,6 +38,7 @@ const MODE_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-([a-z-]+))?(?:\s+(.+)
 const VOICE_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-voice)?\s+voice\s+(on|off|status|toggle)\s*$/i;
 const VOICE_NL_ON = [/\benable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?on\b/i, /\bspeak (?:replies|responses|out loud)\b/i];
 const VOICE_NL_OFF = [/\bdisable (?:darkman-?x )?voice\b/i, /\bvoice (?:mode )?off\b/i, /\bstop speaking\b/i, /\bmute voice\b/i];
+const SFX_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-sfx)?\s+sfx\s+(on|off|status|toggle)\s*$/i;
 const STATS_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?-stats\b(.*)$/i;
 const STATUS_COMMAND_RE = /^\s*\/darkman-x(?::darkman-x)?(?:-status|\s+status)\b(.*)$/i;
 
@@ -119,9 +120,10 @@ function clearMode() {
 
 // Shared wording with the Pi extension's ctx.ui.notify() strings
 // (.pi/extensions/darkman-x.ts) so both surfaces read identically.
-function modeConfirmLine(mode, voiceOn) {
+function modeConfirmLine(mode, voiceOn, sfxOn) {
+  const badge = (voiceOn ? ' +VOICE' : '') + (sfxOn ? ' +SFX' : '');
   if (mode === 'off') return 'darkman-x off. Normal voice.';
-  return 'darkman-x ' + mode + (voiceOn ? ' +VOICE' : '');
+  return 'darkman-x ' + mode + badge;
 }
 
 function voiceStatusLine(dir) {
@@ -130,14 +132,21 @@ function voiceStatusLine(dir) {
   return 'voice ' + (on ? 'ON' : 'OFF') + ' · model ' + vs.model + ' · id ' + vs.referenceId;
 }
 
+function sfxStatusLine(dir) {
+  const on = config.isSfxEnabled(dir);
+  return 'sfx ' + (on ? 'ON' : 'OFF');
+}
+
 function statusLine(dir) {
   const mode = (config.readFlag(activeFlagPath()) || 'off').trim() || 'off';
   // Always print prev= (default 'full', matching the Pi extension's initial
   // state.prevMode) so the two surfaces are byte-identical, not just same-shape.
   const prev = (config.readFlag(prevFlagPath()) || '').trim() || 'full';
   const on = config.isVoiceEnabled(dir);
+  const sfxOn = config.isSfxEnabled(dir);
   const vs = config.getVoiceSettings();
-  return 'mode=' + mode + ' prev=' + prev + ' voice=' + (on ? 'ON' : 'OFF') + ' model=' + vs.model;
+  return 'mode=' + mode + ' prev=' + prev + ' voice=' + (on ? 'ON' : 'OFF') +
+    ' sfx=' + (sfxOn ? 'ON' : 'OFF') + ' model=' + vs.model;
 }
 
 function runStats(argTail, transcriptPath) {
@@ -202,7 +211,7 @@ function main() {
 
   if (DEACTIVATION_PATTERNS.some((re) => re.test(prompt))) {
     clearMode();
-    emitBlock(modeConfirmLine('off', false));
+    emitBlock(modeConfirmLine('off', false, false));
     process.exit(0);
     return;
   }
@@ -247,6 +256,23 @@ function main() {
     return;
   }
 
+  // /darkman-x sfx on|off|status|toggle  (also /darkman-x-sfx on|off)
+  const sfxMatch = prompt.match(SFX_COMMAND_RE) ||
+    prompt.match(/^\s*\/darkman-x-sfx\s+(on|off|status|toggle)\s*$/i);
+  if (sfxMatch) {
+    const action = (sfxMatch[1] || '').toLowerCase();
+    const dir = claudeConfigDir();
+    if (action === 'toggle') {
+      config.setSfxEnabled(!config.isSfxEnabled(dir), dir);
+    } else if (action === 'on' || action === 'off') {
+      config.setSfxEnabled(action === 'on', dir);
+    }
+    // 'status' falls through — read-only, no write.
+    emitBlock(sfxStatusLine(dir));
+    process.exit(0);
+    return;
+  }
+
   const modeMatch = prompt.match(MODE_COMMAND_RE);
   if (modeMatch) {
     const suffix = (modeMatch[1] || '').toLowerCase();
@@ -267,6 +293,21 @@ function main() {
       return;
     }
 
+    // /darkman-x-sfx on|off  or  /darkman-x sfx on|off  (suffix path)
+    if (suffix === 'sfx' || arg.startsWith('sfx ')) {
+      const action = (suffix === 'sfx' ? arg : arg.replace(/^sfx\s+/, '')).trim().toLowerCase();
+      const dir = claudeConfigDir();
+      if (action === 'toggle') {
+        config.setSfxEnabled(!config.isSfxEnabled(dir), dir);
+      } else if (action === 'on' || action === 'off') {
+        config.setSfxEnabled(action === 'on', dir);
+      }
+      // 'status' / '' falls through — read-only, no write.
+      emitBlock(sfxStatusLine(dir));
+      process.exit(0);
+      return;
+    }
+
     const requestedMode = suffix && config.VALID_MODES.includes(suffix)
       ? suffix
       : (arg && config.VALID_MODES.includes(arg) ? arg : null);
@@ -278,7 +319,8 @@ function main() {
       // actually performs the action (per commands/darkman-x-<mode>.md).
       // Blocking here would set the flag and then do nothing else.
       if (!INDEPENDENT_MODES.has(requestedMode)) {
-        emitBlock(modeConfirmLine(requestedMode, config.isVoiceEnabled(claudeConfigDir())));
+        const dir = claudeConfigDir();
+        emitBlock(modeConfirmLine(requestedMode, config.isVoiceEnabled(dir), config.isSfxEnabled(dir)));
         process.exit(0);
         return;
       }

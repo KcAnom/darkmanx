@@ -26,6 +26,7 @@ const MODE_LOG_BASENAME = '.darkman-x-mode-log.jsonl';
 const VOICE_FLAG_BASENAME = '.darkman-x-voice';
 const DEFAULT_VOICE_ID = '552fdfe0e4f542c1bb381d1006c1ac9b';
 const DEFAULT_VOICE_MODEL = 's2.1-pro-free';
+const SFX_FLAG_BASENAME = '.darkman-x-sfx';
 
 
 function debugLog(...args) {
@@ -265,6 +266,36 @@ function getVoiceSettings() {
   };
 }
 
+function sfxFlagPath(configDir) {
+  const dir = configDir || process.env.CLAUDE_CONFIG_DIR || getConfigDir();
+  if (configDir || process.env.CLAUDE_CONFIG_DIR) {
+    return path.join(dir, SFX_FLAG_BASENAME);
+  }
+  return path.join(getConfigDir(), SFX_FLAG_BASENAME);
+}
+
+function isSfxEnabled(configDir) {
+  const env = process.env.DARKMANX_SFX;
+  if (env === '0' || env === 'off' || env === 'false') return false;
+  if (env === '1' || env === 'on' || env === 'true') return true;
+
+  const flagPath = sfxFlagPath(configDir);
+  const raw = (readFlag(flagPath) || '').trim().toLowerCase();
+  if (raw === 'on' || raw === '1' || raw === 'true') return true;
+  if (raw === 'off' || raw === '0' || raw === 'false') return false;
+
+  const userConfig = readJsonSafe(getConfigPath());
+  if (userConfig && userConfig.sfx && typeof userConfig.sfx.enabled === 'boolean') {
+    return userConfig.sfx.enabled;
+  }
+  return false;
+}
+
+function setSfxEnabled(enabled, configDir) {
+  const flagPath = sfxFlagPath(configDir);
+  return safeWriteFlag(flagPath, enabled ? 'on' : 'off');
+}
+
 module.exports = {
   VALID_MODES,
   MODE_LOG_BASENAME,
@@ -284,4 +315,8 @@ module.exports = {
   isVoiceEnabled,
   setVoiceEnabled,
   getVoiceSettings,
+  SFX_FLAG_BASENAME,
+  sfxFlagPath,
+  isSfxEnabled,
+  setSfxEnabled,
 };

@@ -57,6 +57,7 @@ type State = {
 	mode: string;
 	prevMode: string;
 	voice: boolean;
+	sfx: boolean;
 };
 
 function xdgConfigHome(): string {
@@ -254,6 +255,28 @@ function resolveVoiceDefault(): boolean {
 	return false;
 }
 
+function resolveSfxDefault(): boolean {
+	const env = process.env.DARKMANX_SFX;
+	if (env === "0" || env === "off" || env === "false") return false;
+	if (env === "1" || env === "on" || env === "true") return true;
+
+	const flagPath = path.join(darkmanConfigDir(), ".darkman-x-sfx");
+	try {
+		if (fs.existsSync(flagPath) && !fs.lstatSync(flagPath).isSymbolicLink()) {
+			const raw = fs.readFileSync(flagPath, "utf8").trim().toLowerCase();
+			if (raw === "on" || raw === "1" || raw === "true") return true;
+			if (raw === "off" || raw === "0" || raw === "false") return false;
+		}
+	} catch {
+		// ignore
+	}
+
+	const userCfg = readJsonSafe(path.join(darkmanConfigDir(), "config.json"));
+	const sfx = userCfg && (userCfg.sfx as Record<string, unknown> | undefined);
+	if (sfx && typeof sfx.enabled === "boolean") return sfx.enabled;
+	return false;
+}
+
 function skillCandidates(cwd: string, repoRoot: string): string[] {
 	return [
 		path.join(repoRoot, "skills", "darkman-x", "SKILL.md"),
@@ -350,6 +373,18 @@ function writeVoiceFlag(enabled: boolean): void {
 	}
 }
 
+function writeSfxFlag(enabled: boolean): void {
+	try {
+		const dir = darkmanConfigDir();
+		fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+		const flagPath = path.join(dir, ".darkman-x-sfx");
+		if (fs.existsSync(flagPath) && fs.lstatSync(flagPath).isSymbolicLink()) return;
+		fs.writeFileSync(flagPath, enabled ? "on\n" : "off\n", { mode: 0o600 });
+	} catch {
+		// silent-fail
+	}
+}
+
 function speakPath(cwd: string, repoRoot: string): string | null {
 	const candidates = [
 		path.join(repoRoot, "src", "tools", "darkman-x-speak.js"),
@@ -377,13 +412,40 @@ function trySpeak(cwd: string, repoRoot: string, text: string): void {
 	}
 }
 
+function sfxPath(cwd: string, repoRoot: string): string | null {
+	const candidates = [
+		path.join(repoRoot, "src", "tools", "darkman-x-sfx.js"),
+		path.join(cwd, "src", "tools", "darkman-x-sfx.js"),
+	];
+	for (const p of candidates) {
+		if (fs.existsSync(p)) return p;
+	}
+	return null;
+}
+
+function trySfx(cwd: string, repoRoot: string, clip: string): void {
+	const script = sfxPath(cwd, repoRoot);
+	if (!script) return;
+	try {
+		spawnSync(process.execPath, [script, "--quiet", clip], {
+			cwd: repoRoot,
+			stdio: "ignore",
+			timeout: 15_000,
+			env: process.env,
+		});
+	} catch {
+		// silent-fail — never block session
+	}
+}
+
 function setStatus(ctx: ExtensionContext, state: State): void {
 	if (state.mode === "off") {
 		ctx.ui.setStatus("darkman-x", undefined);
 		return;
 	}
 	const voiceBit = state.voice ? " +VOICE" : "";
-	ctx.ui.setStatus("darkman-x", `darkman-x:${state.mode}${voiceBit}`);
+	const sfxBit = state.sfx ? " +SFX" : "";
+	ctx.ui.setStatus("darkman-x", `darkman-x:${state.mode}${voiceBit}${sfxBit}`);
 }
 
 function normalizeMode(raw: string): string | null {
@@ -407,6 +469,7 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 		mode: "full",
 		prevMode: "full",
 		voice: false,
+		sfx: false,
 	};
 	let cwd = process.cwd();
 	let repoRoot = resolveDarkmanRoot(cwd);
@@ -442,7 +505,8 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 			if (state.mode === "off") {
 				ctx.ui.notify("darkman-x off. Normal voice.", "info");
 			} else {
-				ctx.ui.notify(`darkman-x ${state.mode}${state.voice ? " +VOICE" : ""}`, "info");
+				const badge = `${state.voice ? " +VOICE" : ""}${state.sfx ? " +SFX" : ""}`;
+				ctx.ui.notify(`darkman-x ${state.mode}${badge}`, "info");
 			}
 		}
 	}
@@ -458,6 +522,7 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 				}
 				if (typeof data.prevMode === "string") state.prevMode = data.prevMode;
 				if (typeof data.voice === "boolean") state.voice = data.voice;
+				if (typeof data.sfx === "boolean") state.sfx = data.sfx;
 			}
 		} catch {
 			// silent-fail — never block session start
@@ -486,13 +551,15 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 		state.mode = defaultMode;
 		state.prevMode = INDEPENDENT.has(defaultMode) ? "full" : defaultMode;
 		state.voice = resolveVoiceDefault();
+		state.sfx = resolveSfxDefault();
 
 		reconstructFromSession(ctx);
 		refreshRules();
 		setStatus(ctx, state);
 
 		if (state.mode !== "off") {
-			ctx.ui.notify(`darkman-x ${state.mode}${state.voice ? " +VOICE" : ""}`, "info");
+			const badge = `${state.voice ? " +VOICE" : ""}${state.sfx ? " +SFX" : ""}`;
+			ctx.ui.notify(`darkman-x ${state.mode}${badge}`, "info");
 		}
 	});
 
@@ -525,6 +592,21 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 				].join("\n")
 			: "";
 
+		const sfxTool = sfxPath(cwd, repoRoot) || path.join(repoRoot, "src", "tools", "darkman-x-sfx.js");
+		// Match Claude's darkman-x-activate.js sfxRulesBlock() wording exactly.
+		const sfxBlock = state.sfx
+			? [
+					"",
+					"## SFX (DMX sound clips — ON, personal use only)",
+					"A small library of DMX audio clips is available, out-of-tree (never committed, never in code/commits/PRs).",
+					`- List what exists: \`node "${sfxTool}" --list\``,
+					`- Play one: \`node "${sfxTool}" --quiet <clip-name>\` (fuzzy match on name, case-insensitive)`,
+					'- This is fully your call, not a fixed trigger table. Use real judgment on when a moment earns one — a genuine win, activation, something funny, hype, or just because. No fixed schedule, no per-turn requirement, no held-back clips. Personal machine only — enjoy it, but "every now and then" beats every single reply.',
+					"- Missing/unmatched clip → skip silently, never fail the turn over it.",
+					"- Toggle: `/darkman-x sfx off`.",
+				].join("\n")
+			: "";
+
 		return {
 			systemPrompt:
 				event.systemPrompt +
@@ -534,6 +616,7 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 
 ${rulesCache}
 ${voiceBlock}
+${sfxBlock}
 `,
 		};
 	});
@@ -597,6 +680,27 @@ ${voiceBlock}
 				return;
 			}
 
+			if (head === "sfx") {
+				const sub = (parts[1] || "status").toLowerCase();
+				if (sub === "on") {
+					state.sfx = true;
+					writeSfxFlag(true);
+				} else if (sub === "off") {
+					state.sfx = false;
+					writeSfxFlag(false);
+				} else if (sub === "toggle") {
+					state.sfx = !state.sfx;
+					writeSfxFlag(state.sfx);
+				} else if (sub !== "status") {
+					ctx.ui.notify(`Unknown sfx subcommand: ${sub}. Use on|off|status|toggle.`, "warning");
+					return;
+				}
+				setStatus(ctx, state);
+				pi.appendEntry(STATE_TYPE, { ...state });
+				ctx.ui.notify(`sfx ${state.sfx ? "ON" : "OFF"}`, "info");
+				return;
+			}
+
 			const mode = normalizeMode(raw);
 			if (!mode) {
 				ctx.ui.notify(
@@ -642,12 +746,41 @@ ${voiceBlock}
 		},
 	});
 
+	pi.registerCommand("darkman-x-sfx", {
+		description: "Toggle DMX sound clips (personal use, out-of-tree)",
+		handler: async (args, ctx) => {
+			const sub = ((args || "status").trim().split(/\s+/)[0] || "status").toLowerCase();
+			if (sub === "on") {
+				state.sfx = true;
+				writeSfxFlag(true);
+			} else if (sub === "off") {
+				state.sfx = false;
+				writeSfxFlag(false);
+			} else if (sub === "toggle") {
+				state.sfx = !state.sfx;
+				writeSfxFlag(state.sfx);
+			} else if (sub === "status") {
+				// fall through to notify
+			} else if (sub === "test") {
+				trySfx(cwd, repoRoot, "bark");
+				ctx.ui.notify("sfx test sent", "info");
+				return;
+			} else {
+				ctx.ui.notify(`Unknown: ${sub}. Use on|off|status|toggle|test`, "warning");
+				return;
+			}
+			setStatus(ctx, state);
+			pi.appendEntry(STATE_TYPE, { ...state });
+			ctx.ui.notify(`sfx ${state.sfx ? "ON" : "OFF"}`, "info");
+		},
+	});
+
 	pi.registerCommand("darkman-x-status", {
-		description: "Show darkman-x mode + voice state",
+		description: "Show darkman-x mode + voice + sfx state",
 		handler: async (_args, ctx) => {
 			const vs = voiceSettings();
 			ctx.ui.notify(
-				`mode=${state.mode} prev=${state.prevMode} voice=${state.voice ? "ON" : "OFF"} model=${vs.model}`,
+				`mode=${state.mode} prev=${state.prevMode} voice=${state.voice ? "ON" : "OFF"} sfx=${state.sfx ? "ON" : "OFF"} model=${vs.model}`,
 				"info",
 			);
 		},

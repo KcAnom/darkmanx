@@ -7,6 +7,7 @@ Edit these (source of truth):
 - `agents/*.md`
 - `src/rules/*.md`
 - `src/hooks/*.js`
+- `src/tools/*.js`
 - `bin/install.js`, `bin/lib/*.js`
 - `src/mcp-servers/darkman-x-shrink/*`
 - `src/plugins/opencode/*`
@@ -33,5 +34,6 @@ If you find yourself editing anything under `plugins/darkman-x/`, stop — go ed
 6. **No fabricated benchmark numbers** — see `docs/HONEST-NUMBERS.md`. If you don't have a real measurement, label it clearly as a placeholder.
 7. **Compress style, never language or meaning** — `darkman-x-compress` and the MCP shrink proxy must never mangle code fences, inline code, URLs, or paths.
 8. **No caveman/prehistoric voice.** This is an intentional rebrand — Darkman X / DMX energy only. See `RECREATION-PROMPT.md` for the full brand-voice rules.
+9. **SFX clips never get committed.** `src/tools/darkman-x-sfx.js` plays audio from an out-of-tree directory (`~/.config/darkman-x/sfx/` by default) — never add clip files to this repo, this repo is public, and the clips are copyrighted. Triggering is model-judgment only (no hardcoded event→clip map) — don't build one.
 
 Full architecture and file-by-file build spec: [`RECREATION-PROMPT.md`](./RECREATION-PROMPT.md).

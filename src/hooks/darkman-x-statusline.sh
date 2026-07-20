@@ -35,4 +35,13 @@ if [ -f "$voice_file" ]; then
   fi
 fi
 
-printf '%s%s%s' "$badge" "$voice_badge" "$suffix"
+sfx_file="$config_dir/.darkman-x-sfx"
+sfx_badge=""
+if [ -f "$sfx_file" ]; then
+  sfx_state="$(cat "$sfx_file" 2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+  if [ "$sfx_state" = "on" ] || [ "$sfx_state" = "1" ] || [ "$sfx_state" = "true" ]; then
+    sfx_badge="+SFX"
+  fi
+fi
+
+printf '%s%s%s%s' "$badge" "$voice_badge" "$sfx_badge" "$suffix"

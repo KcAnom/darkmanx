@@ -12,6 +12,7 @@ must never block a Claude Code session from starting.
 | `xcrew-model-overrides.js` | (invoked by activate) | Rewrites `agents/xcrew-*.md` frontmatter `model:` field from env vars |
 | `darkman-x-statusline.sh` / `.ps1` | statusLine | Prints the `[DARKMAN-X]` badge, optional `+VOICE`, + savings suffix |
 | `../tools/darkman-x-speak.js` | (CLI) | Fish Audio S2.1-Pro TTS for darkman-x spoken replies |
+| `../tools/darkman-x-sfx.js` | (CLI) | Plays a DMX sound clip from an out-of-tree, gitignored directory — personal use, model-judgment triggered, never in code/commits/PRs |
 
 ## Env vars
 
@@ -27,6 +28,8 @@ must never block a Claude Code session from starting.
 | `DARKMANX_VOICE_ID` | Override default Fish voice reference id |
 | `DARKMANX_VOICE_MODEL` | Override TTS model (default `s2.1-pro-free`) |
 | `DARKMANX_VOICE_PLAY=0` | Write audio file but skip local playback |
+| `DARKMANX_SFX=on\|off` | Force sfx toggle (overrides flag file) |
+| `DARKMANX_SFX_DIR` | Override the sfx clips directory (default `~/.config/darkman-x/sfx/`) |
 
 ## Install
 

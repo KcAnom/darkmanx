@@ -35,4 +35,14 @@ if (Test-Path $voiceFile) {
   }
 }
 
-Write-Host -NoNewline "$badge$voiceBadge$suffix"
+$sfxFile = Join-Path $configDir '.darkman-x-sfx'
+$sfxBadge = ''
+if (Test-Path $sfxFile) {
+  $sx = (Get-Content $sfxFile -Raw -ErrorAction SilentlyContinue)
+  if ($null -ne $sx) {
+    $sx = $sx.Trim().ToLower()
+    if ($sx -eq 'on' -or $sx -eq '1' -or $sx -eq 'true') { $sfxBadge = '+SFX' }
+  }
+}
+
+Write-Host -NoNewline "$badge$voiceBadge$sfxBadge$suffix"

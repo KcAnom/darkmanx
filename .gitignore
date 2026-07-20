@@ -11,6 +11,13 @@ __pycache__/
 *.pyc
 .pytest_cache/
 darkman-x-compress/backups/
+# darkman-x sfx clips are personal/copyrighted audio, never committed —
+# they live out-of-tree at ~/.config/darkman-x/sfx/. Defense in depth in
+# case anyone ever points DARKMANX_SFX_DIR at something inside the repo.
+*.mp3
+*.wav
+*.m4a
+sfx/
 benchmarks/results/*.json
 !benchmarks/results/.gitkeep
 .claude/settings.local.json

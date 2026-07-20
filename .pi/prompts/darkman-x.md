@@ -3,7 +3,7 @@ description: Switch darkman-x intensity, or turn it off.
 argument-hint: "[off|lite|full|ultra|wenyan-lite|wenyan|wenyan-ultra|voice on|voice off]"
 ---
 
-Set darkman-x mode to `${1:-full}`. If args start with `voice`, treat as voice toggle (`on`/`off`/`status`/`toggle`) for Fish Audio spoken replies (`s2.1-pro-free`, voice `552fdfe0e4f542c1bb381d1006c1ac9b`) — confirm voice state only.
+Set darkman-x mode to `${1:-full}`. If args start with `voice`, treat as voice toggle (`on`/`off`/`status`/`toggle`) for Fish Audio spoken replies (`s2.1-pro-free`, voice `552fdfe0e4f542c1bb381d1006c1ac9b`) — confirm voice state only. If args start with `sfx`, treat as sfx toggle (`on`/`off`/`status`/`toggle`) for personal DMX sound clips (out-of-tree, see `.pi/prompts/darkman-x-sfx.md`) — confirm sfx state only.
 
 Otherwise:
 1. Prefer the `/darkman-x` extension command if available (it persists mode for this Pi session).
