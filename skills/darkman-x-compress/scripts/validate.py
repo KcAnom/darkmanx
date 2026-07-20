@@ -40,6 +40,11 @@ def validate(original, compressed):
     if orig_urls != comp_urls:
         problems.append("URLs changed or dropped")
 
+    orig_paths = sorted(_extract(PATH_RE, original))
+    comp_paths = sorted(_extract(PATH_RE, compressed))
+    if orig_paths != comp_paths:
+        problems.append("file paths changed")
+
     orig_headings = [(len(h[0]), h[1].strip()) for h in HEADING_RE.findall(original)]
     comp_headings = [(len(h[0]), h[1].strip()) for h in HEADING_RE.findall(compressed)]
     if orig_headings != comp_headings:

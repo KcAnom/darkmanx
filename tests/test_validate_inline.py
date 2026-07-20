@@ -67,6 +67,19 @@ class TestValidateInline(unittest.TestCase):
         result = validate.validate(original, rewritten)
         self.assertFalse(_is_valid(result))
 
+    def test_mangled_bare_path_is_invalid(self):
+        # Not wrapped in backticks — a plain-prose file path reference.
+        original = "See src/hooks/darkman-x-config.js for flag writes."
+        rewritten = "See src/hooks/CONFIG-RENAMED.js for flag writes."
+        result = validate.validate(original, rewritten)
+        self.assertFalse(_is_valid(result))
+
+    def test_preserved_bare_path_is_valid(self):
+        original = "See src/hooks/darkman-x-config.js for details on flag writes."
+        rewritten = "See src/hooks/darkman-x-config.js — flag writes only."
+        result = validate.validate(original, rewritten)
+        self.assertTrue(_is_valid(result))
+
 
 if __name__ == "__main__":
     unittest.main()
