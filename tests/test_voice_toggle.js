@@ -89,7 +89,14 @@ test('speak --dry-run reports default model and voice', () => {
 
 test('speak without key exits 2', () => {
   const env = { ...process.env };
-  delete env.FISH_API_KEY;
+  // darkman-x-speak.js's loadDotEnvFiles() reads a repo-root `.env` via a
+  // hardcoded __dirname-relative path regardless of cwd — merely deleting
+  // FISH_API_KEY here doesn't simulate "no key" in a repo that has a real
+  // .env (it gets silently reloaded from disk and the test would instead
+  // exercise a live API call). Set an explicit placeholder that
+  // isUsableApiKey() already rejects, and loadDotEnvFiles() only fills in
+  // keys that are undefined, so this value is left alone.
+  env.FISH_API_KEY = 'changeme';
   delete env.FISH_AUDIO_API_KEY;
   const result = spawnSync(
     process.execPath,
