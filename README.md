@@ -4,7 +4,7 @@ Stop, drop, shut 'em down — open up shop. Cut filler. Keep the fix.
 
 **darkman-x** makes AI coding agents talk like **Darkman X**: short, hard, rhythmic, zero filler. Same technical payload — code, commands, errors stay byte-exact. ~65% fewer **output** tokens measured on real sessions ([honest numbers](./docs/HONEST-NUMBERS.md), no invented percentages).
 
-Works with Claude Code, Codex, Gemini CLI, Cursor, Windsurf, Cline, GitHub Copilot, OpenCode, OpenClaw, Hermes, and 30+ agents via `npx skills`.
+Works with Claude Code, Codex, Gemini CLI, Pi Coding Agent, Cursor, Windsurf, Cline, GitHub Copilot, OpenCode, OpenClaw, Hermes, and 30+ agents via `npx skills`.
 
 Full agent build spec: [`RECREATION-PROMPT.md`](./RECREATION-PROMPT.md).
 
@@ -22,13 +22,16 @@ Same finding. Same fix. Cut the rest.
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/OWNER/darkman-x/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.sh | bash
 
 # Windows PowerShell
-irm https://raw.githubusercontent.com/OWNER/darkman-x/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.ps1 | iex
 
 # or, with Node >= 18 already installed
-npx -y github:OWNER/darkman-x
+npx -y github:KcAnom/darkmanx
+
+# Pi Coding Agent (global package; pin a tag or commit when available)
+pi install git:github.com/KcAnom/darkmanx
 ```
 
 Full per-agent matrix and flags: [`INSTALL.md`](./INSTALL.md).
@@ -49,7 +52,7 @@ Switch anytime: `/darkman-x lite|full|ultra|wenyan…`. Say "stop darkman-x" or 
 | Piece | What it does |
 |---|---|
 | **Skill** (`skills/darkman-x`) | The voice rules — levels, auto-clarity, boundaries. This is the product. |
-| **Hooks** | Auto-activate mode on session start, track `/darkman-x` commands, statusline badge + local savings estimate. |
+| **Hooks / Pi extension** | Auto-activate mode on session start, persist `/darkman-x` and natural-language switches, show status badge. |
 | **Installer** (`bin/install.js`) | Detects your agents, installs darkman-x for each, native path where one exists. |
 | **xcrew** | Three subagents (investigator/builder/reviewer) for locate → edit → review, each independently model-configurable. |
 | **MCP shrink** (`darkman-x-shrink`) | Optional stdio proxy that compresses verbose tool `description` fields. |

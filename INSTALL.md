@@ -4,13 +4,16 @@ One-liners:
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/OWNER/darkman-x/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.sh | bash
 
 # Windows PowerShell
-irm https://raw.githubusercontent.com/OWNER/darkman-x/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.ps1 | iex
 
 # or, if you have Node >= 18
-npx -y github:OWNER/darkman-x
+npx -y github:KcAnom/darkmanx
+
+# Pi Coding Agent package
+pi install git:github.com/KcAnom/darkmanx
 ```
 
 Run `node bin/install.js --help` for the full flag list, or `--list` to see every detected agent on your machine before installing.
@@ -22,6 +25,7 @@ Run `node bin/install.js --help` for the full flag list, or `--list` to see ever
 | Claude Code | `claude` | native plugin + optional hooks | `node bin/install.js --only claude` |
 | Codex | `codex` | native (`.codex/config.toml`, `.codex/hooks.json`) | `node bin/install.js --only codex` |
 | Gemini CLI | `gemini` | native (`gemini-extension.json`, `GEMINI.md`) | `node bin/install.js --only gemini` |
+| Pi Coding Agent | — | native Pi package (`.pi` extension, skills, prompts) | `pi install git:github.com/KcAnom/darkmanx` |
 | OpenCode | `opencode` | native plugin (`src/plugins/opencode`) | `node bin/install.js --only opencode` |
 | OpenClaw | `openclaw` | native (workspace skill + `SOUL.md` bootstrap block) | `node bin/install.js --only openclaw` |
 | Hermes | `hermes` | native | `node bin/install.js --only hermes` |
@@ -29,7 +33,7 @@ Run `node bin/install.js --help` for the full flag list, or `--list` to see ever
 | Windsurf | `windsurf` | via `npx skills add` | `node bin/install.js --only windsurf` |
 | Cline | `cline` | via `npx skills add` | `node bin/install.js --only cline` |
 | GitHub Copilot | `copilot` | via `npx skills add` (AGENTS.md append) | `node bin/install.js --only copilot` |
-| 30+ others | — | via `npx skills add REPO -a <profile>` | `npx skills add OWNER/darkman-x -a <agent>` |
+| 30+ others | — | via `npx skills add REPO -a <profile>` | `npx skills add KcAnom/darkmanx -a <agent>` |
 
 Soft-detected (dir-only) providers require an explicit `--only <id>` — they won't be picked up by auto-detect alone.
 

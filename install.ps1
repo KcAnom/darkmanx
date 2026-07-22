@@ -1,5 +1,5 @@
 # darkman-x installer shim. Safe to run via:
-#   irm https://raw.githubusercontent.com/OWNER/darkman-x/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.ps1 | iex
 # Logic lives in a function so it works without $PSCommandPath (piped execution).
 
 function Install-DarkmanX {
@@ -24,7 +24,7 @@ function Install-DarkmanX {
     if ($PSScriptRoot -and (Test-Path $localInstaller)) {
         node $localInstaller @Args
     } else {
-        npx -y "github:OWNER/darkman-x" @Args
+        npx -y "github:KcAnom/darkmanx" @Args
     }
 }
 

@@ -21,7 +21,8 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 // Guard: if both global (~/.pi/agent/extensions) and project (.pi/extensions)
 // resolve to the same file, only the first factory runs.
 const GLOBAL_ONCE_KEY = "__darkmanXPiExtensionLoaded";
-const g = globalThis as typeof globalThis & { [GLOBAL_ONCE_KEY]?: boolean };
+type GlobalRegistration = { owner: symbol };
+const g = globalThis as typeof globalThis & { [GLOBAL_ONCE_KEY]?: GlobalRegistration };
 
 const VALID_MODES = new Set([
 	"off",
@@ -38,6 +39,19 @@ const VALID_MODES = new Set([
 ]);
 
 const INDEPENDENT = new Set(["commit", "review", "compress"]);
+const COMPRESSION: Record<string, number> = {
+	off: 0,
+	lite: 0.35,
+	full: 0.65,
+	ultra: 0.8,
+	"wenyan-lite": 0.35,
+	wenyan: 0.65,
+	"wenyan-full": 0.65,
+	"wenyan-ultra": 0.8,
+	commit: 0,
+	review: 0,
+	compress: 0,
+};
 
 const DEFAULT_VOICE_ID = "552fdfe0e4f542c1bb381d1006c1ac9b";
 const DEFAULT_VOICE_MODEL = "s2.1-pro-free";
@@ -458,12 +472,47 @@ function normalizeMode(raw: string): string | null {
 	return null;
 }
 
+type NaturalAction =
+	| { kind: "mode"; value: string }
+	| { kind: "voice"; value: boolean }
+	| { kind: "sfx"; value: boolean };
+
+function parseNaturalAction(raw: string): NaturalAction | null {
+	const text = raw
+		.trim()
+		.toLowerCase()
+		.replace(/[.!]+$/g, "")
+		.replace(/\s+/g, " ");
+
+	if (["stop darkman-x", "stop darkman x", "normal mode"].includes(text)) {
+		return { kind: "mode", value: "off" };
+	}
+	if (
+		["talk like darkman x", "talk like darkman-x", "activate darkman-x", "enable darkman-x", "less tokens"].includes(text)
+	) {
+		return { kind: "mode", value: "full" };
+	}
+
+	const modeMatch = text.match(
+		/^(?:go|switch to|set darkman-x to) (lite|full|ultra|wenyan-lite|wenyan|wenyan-full|wenyan-ultra)$/,
+	);
+	if (modeMatch) return { kind: "mode", value: modeMatch[1] };
+
+	if (["stop speaking", "voice off"].includes(text)) return { kind: "voice", value: false };
+	if (["start speaking", "voice on"].includes(text)) return { kind: "voice", value: true };
+	if (["sfx off", "stop sfx"].includes(text)) return { kind: "sfx", value: false };
+	if (["sfx on", "start sfx"].includes(text)) return { kind: "sfx", value: true };
+
+	return null;
+}
+
 export default function darkmanXExtension(pi: ExtensionAPI) {
 	if (g[GLOBAL_ONCE_KEY]) {
-		// Already registered (global + project both pointed here).
+		// Already registered in this runtime (for example, global package + project-local copy).
 		return;
 	}
-	g[GLOBAL_ONCE_KEY] = true;
+	const registrationOwner = Symbol("darkman-x-pi-extension");
+	g[GLOBAL_ONCE_KEY] = { owner: registrationOwner };
 
 	const state: State = {
 		mode: "full",
@@ -567,6 +616,38 @@ export default function darkmanXExtension(pi: ExtensionAPI) {
 		reconstructFromSession(ctx);
 		refreshRules();
 		setStatus(ctx, state);
+	});
+
+	// Pi keeps globalThis across /reload and replacement sessions. Release the
+	// duplicate-load guard so the new runtime can register cleanly.
+	pi.on("session_shutdown", async () => {
+		if (g[GLOBAL_ONCE_KEY]?.owner === registrationOwner) {
+			delete g[GLOBAL_ONCE_KEY];
+		}
+	});
+
+	// Persist documented natural-language switches without spending a model turn.
+	pi.on("input", async (event, ctx) => {
+		if (event.source === "extension") return { action: "continue" as const };
+		const action = parseNaturalAction(event.text);
+		if (!action) return { action: "continue" as const };
+
+		if (action.kind === "mode") {
+			applyMode(action.value, ctx);
+		} else if (action.kind === "voice") {
+			state.voice = action.value;
+			writeVoiceFlag(state.voice);
+			setStatus(ctx, state);
+			pi.appendEntry(STATE_TYPE, { ...state });
+			ctx.ui.notify(`voice ${state.voice ? "ON" : "OFF"}`, "info");
+		} else {
+			state.sfx = action.value;
+			writeSfxFlag(state.sfx);
+			setStatus(ctx, state);
+			pi.appendEntry(STATE_TYPE, { ...state });
+			ctx.ui.notify(`sfx ${state.sfx ? "ON" : "OFF"}`, "info");
+		}
+		return { action: "handled" as const };
 	});
 
 	// Inject rules every turn while active
@@ -772,6 +853,39 @@ ${sfxBlock}
 			setStatus(ctx, state);
 			pi.appendEntry(STATE_TYPE, { ...state });
 			ctx.ui.notify(`sfx ${state.sfx ? "ON" : "OFF"}`, "info");
+		},
+	});
+
+	pi.registerCommand("darkman-x-stats", {
+		description: "Show real Pi session output tokens + estimated darkman-x savings",
+		handler: async (_args, ctx) => {
+			let mode = resolveDefaultMode(cwd);
+			let actual = 0;
+			let baseline = 0;
+			let outputCost = 0;
+
+			for (const entry of ctx.sessionManager.getBranch()) {
+				if (entry.type === "custom" && entry.customType === STATE_TYPE) {
+					const data = entry.data as Partial<State> | undefined;
+					if (data?.mode && VALID_MODES.has(data.mode)) mode = data.mode;
+					continue;
+				}
+				if (entry.type !== "message" || entry.message.role !== "assistant") continue;
+				const usage = entry.message.usage;
+				const output = typeof usage?.output === "number" ? usage.output : 0;
+				const rate = COMPRESSION[mode] || 0;
+				actual += output;
+				baseline += rate < 1 ? output / (1 - rate) : output;
+				outputCost += typeof usage?.cost?.output === "number" ? usage.cost.output : 0;
+			}
+
+			const roundedBaseline = Math.round(baseline);
+			const saved = Math.max(0, roundedBaseline - actual);
+			const pct = roundedBaseline > 0 ? Math.round((saved / roundedBaseline) * 1000) / 10 : 0;
+			ctx.ui.notify(
+				`Pi session output=${actual} baseline≈${roundedBaseline} saved≈${saved} (${pct}%) output-cost=$${outputCost.toFixed(4)}`,
+				"info",
+			);
 		},
 	});
 

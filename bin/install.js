@@ -303,7 +303,7 @@ function installHermes(args, log) {
 }
 
 function installViaSkills(provider, args, log) {
-  const repo = 'OWNER/darkman-x';
+  const repo = 'KcAnom/darkmanx';
   log(provider.id + ': npx skills add ' + repo + ' -a ' + provider.profile);
   if (args.dryRun) return;
   if (args.skipSkills) {

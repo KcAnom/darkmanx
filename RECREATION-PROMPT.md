@@ -161,11 +161,11 @@ Binary/docs assets under `docs/assets/` and plugin SVG logos: optional placehold
 - name `darkman-x-installer`, version `0.1.0`, license MIT, engines node `>=18`
 - `"bin": { "darkman-x": "./bin/install.js" }`
 - `"scripts": { "test": "node --test tests/installer/*.test.mjs" }`
-- `"files": ["bin/","src/","agents/","skills/","plugins/","commands/","dist/darkman-x.skill","README.md","LICENSE"]`
+- `"files": ["bin/","src/","agents/","skills/","plugins/","commands/","README.md","LICENSE"]`; the ignored `dist/darkman-x.skill` is uploaded by CI, not embedded in fresh npm/git packages
 - No dependencies object required for core installer
 
 **`install.sh` / `install.ps1`**
-- Thin shims only: require Node ≥18; if local `bin/install.js` exists, `exec node bin/install.js "$@"`; else `npx -y github:OWNER/darkman-x` with args
+- Thin shims only: require Node ≥18; if local `bin/install.js` exists, `exec node bin/install.js "$@"`; else `npx -y github:KcAnom/darkmanx` with args
 - PowerShell: wrap logic in function so `irm | iex` works without `$PSCommandPath`
 - Do **not** put real install logic in shims
 
@@ -364,7 +364,7 @@ Export: `VALID_MODES`, `getDefaultMode`, `getConfigDir`, `getConfigPath`, `findR
 **`__main__.py`**: call `cli.main`.
 
 ### CI
-**`.github/workflows/sync-skill.yml`**: on push to main when skills/agents/compress scripts change → copy SoT into `plugins/darkman-x/...` → zip `dist/darkman-x.skill` → commit `[skip ci]`.
+**`.github/workflows/sync-skill.yml`**: on push to main when skills/agents/compress scripts change → copy SoT into `plugins/darkman-x/...` → zip and upload `dist/darkman-x.skill` as a workflow artifact → commit mirror changes `[skip ci]`.
 
 ### Docs / product
 - **README.md**: product front door — before/after, install one-liners, levels table, feature table, benchmark table from real numbers, privacy, honest-numbers link, darkman-x voice

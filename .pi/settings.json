@@ -1,14 +1,4 @@
 {
   "quietStartup": true,
-  "enableSkillCommands": true,
-  "skills": [
-    "./skills",
-    "../skills"
-  ],
-  "prompts": [
-    "./prompts"
-  ],
-  "extensions": [
-    "./extensions/darkman-x.ts"
-  ]
+  "enableSkillCommands": true
 }

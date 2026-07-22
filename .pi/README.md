@@ -5,17 +5,17 @@ Pi sidecar for darkman-x. **Does not touch Claude** (`.claude/`, `.claude-plugin
 Works two ways:
 
 1. **Project-local** — open Pi with cwd = this repo (loads `.pi/` after trust).
-2. **Global (any cwd)** — symlink extension into `~/.pi/agent/extensions/` and point global skills/prompts at this checkout (done on this machine). Extension resolves the repo root via `import.meta.url` / `DARKMANX_ROOT` / `~/darkmanx`.
+2. **Global (any cwd)** — install this checkout/repository as a Pi package. Extension resolves repo root via `import.meta.url` / `DARKMANX_ROOT` / `~/darkmanx`.
 
 ## Layout
 
 ```
 .pi/
-├── settings.json              # skills + prompts + extension paths
+├── settings.json              # project behavior; resources auto-discover
 ├── darkman-x-pi.env           # Pi-dedicated secrets (gitignored) — drop FISH_API_KEY here
 ├── darkman-x-pi.env.example   # tracked template
 ├── extensions/darkman-x.ts    # session activate, /darkman-x, /darkman-x-voice
-├── prompts/                   # /darkman-x* slash templates
+├── prompts/                   # non-extension slash templates (commit/review/init/compress)
 └── skills/                    # symlinks → ../skills/* (source of truth)
 ```
 
@@ -40,12 +40,13 @@ Root `.env` can still exist for other tools. Pi reads its own file first.
 
 | Piece | Behavior |
 |---|---|
-| **Extension** | On `session_start`, loads default mode (`full` unless env/repo/user config says otherwise), injects darkman-x rules via `before_agent_start`, statusline badge. |
+| **Extension** | On `session_start`, loads default mode (`full` unless env/repo/user config says otherwise), injects darkman-x rules via `before_agent_start`, statusline badge, native Pi session stats. |
 | **`/darkman-x`** | Switch intensity: `off\|lite\|full\|ultra\|wenyan-lite\|wenyan\|wenyan-ultra`. Also `voice on\|off\|status\|toggle`. |
 | **`/darkman-x-voice`** | Fish Audio spoken replies. Default model **`s2.1-pro-free`**, voice id `552fdfe0e4f542c1bb381d1006c1ac9b`. |
 | **`/darkman-x-sfx`** | DMX sound clips, personal use only. Model-judgment triggered (no fixed schedule), never in code/commits/PRs. Clips live out-of-tree at `~/.config/darkman-x/sfx/`, never in this repo. |
+| **`/darkman-x-stats`** | Reads current Pi branch usage. Reports real output tokens/cost plus clearly marked savings estimate by active mode. |
 | **Skills** | Symlinked from repo `skills/` — edit source there, not under `.pi/skills/`. |
-| **Prompts** | Pi-native slash templates mirroring `commands/*.md`. |
+| **Prompts** | Pi-native templates for commands not owned by the extension: commit, review, init, compress. |
 
 ## Voice (matches Claude SessionStart)
 
@@ -76,16 +77,18 @@ First interactive Pi session in this repo may ask to trust the project so `.pi/`
 ## Global install (any terminal / any folder)
 
 ```bash
-# extension (auto-discovered)
-ln -sfn /Users/kc/darkmanx/.pi/extensions/darkman-x.ts ~/.pi/agent/extensions/darkman-x.ts
+# From GitHub. Pin a tag or commit for reproducibility.
+pi install git:github.com/KcAnom/darkmanx
 
-# optional: skills + prompts in ~/.pi/agent/settings.json
-#   "skills":  ["/Users/kc/darkmanx/.pi/skills", "/Users/kc/darkmanx/skills"]
-#   "prompts": ["/Users/kc/darkmanx/.pi/prompts"]
-#   "enableSkillCommands": true
+# Or use a local checkout while developing.
+pi install /absolute/path/to/darkmanx
 ```
 
-Double-load safe: if project + global both point at the same file, only one factory runs.
+`package.json` exposes the extension, source skills, and only the four non-overlapping Pi prompts through its `pi` manifest. The five stateful commands (`darkman-x`, `voice`, `sfx`, `stats`, `status`) are extension-only so command names stay unique. Do not also add the extension path or symlink it manually; duplicate resource paths create duplicate commands and skill warnings.
+
+Project-local use needs no path entries: Pi auto-discovers `.pi/extensions`, `.pi/skills`, and `.pi/prompts` after trust.
+
+After upgrading from the old boolean-guard extension, restart Pi once. This version releases its duplicate-load guard on `session_shutdown`, so later `/reload` calls work.
 
 Override repo location: `export DARKMANX_ROOT=/path/to/darkmanx`.
 

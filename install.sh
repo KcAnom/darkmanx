@@ -17,5 +17,5 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/bin/install.js" ]; then
   exec node "$SCRIPT_DIR/bin/install.js" "$@"
 else
-  exec npx -y github:OWNER/darkman-x "$@"
+  exec npx -y github:KcAnom/darkmanx "$@"
 fi

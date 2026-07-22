@@ -2,39 +2,46 @@
   "version": 1,
   "skills": {
     "darkman-x": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x",
-      "computedHash": "TODO-recompute-on-release"
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x/SKILL.md",
+      "computedHash": "36f997f72d8c23ce2785c99c3fd7b957775a852e147dc6139ff2899c2cd37340"
     },
     "darkman-x-commit": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x-commit",
-      "computedHash": "TODO-recompute-on-release"
-    },
-    "darkman-x-review": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x-review",
-      "computedHash": "TODO-recompute-on-release"
-    },
-    "darkman-x-help": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x-help",
-      "computedHash": "TODO-recompute-on-release"
-    },
-    "darkman-x-stats": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x-stats",
-      "computedHash": "TODO-recompute-on-release"
-    },
-    "xcrew": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/xcrew",
-      "computedHash": "TODO-recompute-on-release"
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x-commit/SKILL.md",
+      "computedHash": "b7f6d70f1701369dc55a23d6ec10b5ade09295e6eba86b47de82309da870faac"
     },
     "darkman-x-compress": {
-      "source": "github:OWNER/darkman-x",
-      "skillPath": "skills/darkman-x-compress",
-      "computedHash": "TODO-recompute-on-release"
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x-compress/SKILL.md",
+      "computedHash": "ae362f8aea1e43a4899543bb0d5109de9c332c06dbc58d48b1422974dfaf8837"
+    },
+    "darkman-x-help": {
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x-help/SKILL.md",
+      "computedHash": "c33a478a600420eede4d32af6def69566a134e52c720c3075c977832b8883241"
+    },
+    "darkman-x-review": {
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x-review/SKILL.md",
+      "computedHash": "6b9b1cedcbf66c8d27db6cb72bf4216aa0b43f38bd15a9df9d54eb0d453866f6"
+    },
+    "darkman-x-stats": {
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/darkman-x-stats/SKILL.md",
+      "computedHash": "b8691748f0dd350d6be16690d84bca27cd37b4c26384e9773bf95106615007a5"
+    },
+    "xcrew": {
+      "source": "KcAnom/darkmanx",
+      "sourceType": "github",
+      "skillPath": "skills/xcrew/SKILL.md",
+      "computedHash": "aba288db99a73b0150dfdb049a3ba8fed0f893ee9cea3714d4e003b8efc03275"
     }
   }
 }
