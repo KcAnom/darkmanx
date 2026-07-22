@@ -11,9 +11,6 @@ irm https://raw.githubusercontent.com/KcAnom/darkmanx/main/install.ps1 | iex
 
 # or, if you have Node >= 18
 npx -y github:KcAnom/darkmanx
-
-# Pi Coding Agent package
-pi install git:github.com/KcAnom/darkmanx
 ```
 
 Run `node bin/install.js --help` for the full flag list, or `--list` to see every detected agent on your machine before installing.
@@ -25,7 +22,6 @@ Run `node bin/install.js --help` for the full flag list, or `--list` to see ever
 | Claude Code | `claude` | native plugin (marketplace) | `claude plugin marketplace add KcAnom/darkmanx` |
 | Codex | `codex` | native (`.codex/config.toml`, `.codex/hooks.json`) | `node bin/install.js --only codex` |
 | Gemini CLI | `gemini` | native (`gemini-extension.json`, `GEMINI.md`) | `node bin/install.js --only gemini` |
-| Pi Coding Agent | — | native Pi package (`.pi` extension, skills, prompts) | `pi install git:github.com/KcAnom/darkmanx` |
 | OpenCode | `opencode` | native plugin (`src/plugins/opencode`) | `node bin/install.js --only opencode` |
 | OpenClaw | `openclaw` | native (workspace skill + `SOUL.md` bootstrap block) | `node bin/install.js --only openclaw` |
 | Hermes | `hermes` | native | `node bin/install.js --only hermes` |

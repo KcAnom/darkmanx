@@ -44,17 +44,9 @@ function loadDotEnvFiles() {
   // Never logs values. Silent-fail if files are missing or unreadable.
   // Priority (first file wins per key because later files only fill empty keys):
   //   1. process env already set
-  //   2. .pi/darkman-x-pi.env  (Pi-dedicated secrets)
-  //   3. repo root .env
-  //   4. ~/.config/darkman-x/.env
+  //   2. repo root .env
+  //   3. ~/.config/darkman-x/.env
   const candidates = [];
-  try {
-    // Pi-dedicated secrets — project-local, independent of root .env
-    candidates.push(path.join(process.cwd(), '.pi', 'darkman-x-pi.env'));
-  } catch (_) {}
-  try {
-    candidates.push(path.join(__dirname, '..', '..', '.pi', 'darkman-x-pi.env'));
-  } catch (_) {}
   try {
     candidates.push(path.join(process.cwd(), '.env'));
   } catch (_) {}
@@ -409,7 +401,7 @@ async function main() {
 
   if (!apiKey) {
     process.stderr.write(
-      'darkman-x-speak: FISH_API_KEY is not set.\n  Pi:   .pi/darkman-x-pi.env\n  Root: .env\n  User: ~/.config/darkman-x/.env\n  Line: FISH_API_KEY=your_key_here\n'
+      'darkman-x-speak: FISH_API_KEY is not set.\n  Root: .env\n  User: ~/.config/darkman-x/.env\n  Line: FISH_API_KEY=your_key_here\n'
     );
     process.exit(2);
   }

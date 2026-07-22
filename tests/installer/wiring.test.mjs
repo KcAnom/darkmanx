@@ -22,20 +22,13 @@ function listFiles(root, base = root) {
   return out.sort();
 }
 
-test('package exposes Pi extension, skills, and prompts', () => {
+test('package omits removed Pi integration', () => {
   const pkg = readJson('package.json');
-  assert.ok(pkg.keywords.includes('pi-package'));
-  assert.deepEqual(pkg.pi.extensions, ['./.pi/extensions/darkman-x.ts']);
-  assert.deepEqual(pkg.pi.skills, ['./skills']);
-  assert.deepEqual(pkg.pi.prompts, [
-    './.pi/prompts/darkman-x-commit.md',
-    './.pi/prompts/darkman-x-compress.md',
-    './.pi/prompts/darkman-x-init.md',
-    './.pi/prompts/darkman-x-review.md',
-  ]);
-  for (const resource of ['.pi/extensions/', '.pi/prompts/']) {
-    assert.ok(pkg.files.includes(resource), `package files must include ${resource}`);
-  }
+  assert.equal(pkg.pi, undefined);
+  assert.equal(pkg.peerDependencies?.['@earendil-works/pi-coding-agent'], undefined);
+  assert.ok(!pkg.keywords.includes('pi-package'));
+  assert.ok(pkg.files.every((resource) => !resource.startsWith('.pi/')));
+  assert.ok(!fs.existsSync(path.join(repoRoot, '.pi')));
   assert.ok(!pkg.files.includes('dist/darkman-x.skill'), 'ignored CI artifact must not be declared in fresh packages');
 
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'sync-skill.yml'), 'utf8');
@@ -43,21 +36,7 @@ test('package exposes Pi extension, skills, and prompts', () => {
   assert.match(workflow, /path: dist\/darkman-x\.skill/);
 });
 
-test('Pi prompt filenames do not collide with extension command names', () => {
-  const extensionCommands = new Set([
-    'darkman-x',
-    'darkman-x-voice',
-    'darkman-x-sfx',
-    'darkman-x-stats',
-    'darkman-x-status',
-  ]);
-  const prompts = fs.readdirSync(path.join(repoRoot, '.pi', 'prompts'));
-  for (const prompt of prompts) {
-    assert.ok(!extensionCommands.has(path.basename(prompt, '.md')), `duplicate Pi command: ${prompt}`);
-  }
-});
-
-test('Claude plugin manifest declares its resources, like the Pi manifest does', () => {
+test('Claude plugin manifest declares its resources', () => {
   const plugin = readJson('.claude-plugin/plugin.json');
   assert.equal(plugin.skills, './skills');
   assert.equal(plugin.commands, './commands');

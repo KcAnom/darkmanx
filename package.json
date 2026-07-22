@@ -4,27 +4,9 @@
   "description": "Multi-agent skill/plugin installer for darkman-x \u2014 token-compressed agent speech, hooks, xcrew subagents, MCP shrink.",
   "license": "MIT",
   "keywords": [
-    "pi-package",
     "agent-skill",
     "prompt-compression"
   ],
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*"
-  },
-  "pi": {
-    "extensions": [
-      "./.pi/extensions/darkman-x.ts"
-    ],
-    "skills": [
-      "./skills"
-    ],
-    "prompts": [
-      "./.pi/prompts/darkman-x-commit.md",
-      "./.pi/prompts/darkman-x-compress.md",
-      "./.pi/prompts/darkman-x-init.md",
-      "./.pi/prompts/darkman-x-review.md"
-    ]
-  },
   "engines": {
     "node": ">=18"
   },
@@ -39,10 +21,6 @@
     "skills/",
     "plugins/",
     "commands/",
-    ".pi/extensions/",
-    ".pi/prompts/",
-    ".pi/README.md",
-    ".pi/darkman-x-pi.env.example",
     "README.md",
     "LICENSE"
   ],

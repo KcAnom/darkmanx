@@ -118,8 +118,7 @@ function clearMode() {
   config.safeWriteFlag(activeFlagPath(), 'off');
 }
 
-// Shared wording with the Pi extension's ctx.ui.notify() strings
-// (.pi/extensions/darkman-x.ts) so both surfaces read identically.
+// Shared confirmation wording for hook and command surfaces.
 function modeConfirmLine(mode, voiceOn, sfxOn) {
   const badge = (voiceOn ? ' +VOICE' : '') + (sfxOn ? ' +SFX' : '');
   if (mode === 'off') return 'darkman-x off. Normal voice.';
@@ -139,8 +138,7 @@ function sfxStatusLine(dir) {
 
 function statusLine(dir) {
   const mode = (config.readFlag(activeFlagPath()) || 'off').trim() || 'off';
-  // Always print prev= (default 'full', matching the Pi extension's initial
-  // state.prevMode) so the two surfaces are byte-identical, not just same-shape.
+  // Always print prev= with a stable default so status output keeps one shape.
   const prev = (config.readFlag(prevFlagPath()) || '').trim() || 'full';
   const on = config.isVoiceEnabled(dir);
   const sfxOn = config.isSfxEnabled(dir);
