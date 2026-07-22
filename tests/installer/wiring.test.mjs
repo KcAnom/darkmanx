@@ -57,21 +57,19 @@ test('Pi prompt filenames do not collide with extension command names', () => {
   }
 });
 
-test('Claude plugin and marketplace manifests carry real repository metadata', () => {
+test('Claude plugin manifest declares its resources, like the Pi manifest does', () => {
   const plugin = readJson('.claude-plugin/plugin.json');
-  assert.equal(plugin.name, 'darkman-x');
-  assert.equal(plugin.repository, 'https://github.com/KcAnom/darkmanx');
-  assert.equal(plugin.homepage, 'https://github.com/KcAnom/darkmanx');
-  assert.equal(plugin.author.url, 'https://github.com/KcAnom/darkmanx');
-  assert.equal(plugin.license, 'MIT');
+  assert.equal(plugin.skills, './skills');
+  assert.equal(plugin.commands, './commands');
+  assert.deepEqual(plugin.agents, [
+    './agents/xcrew-builder.md',
+    './agents/xcrew-investigator.md',
+    './agents/xcrew-reviewer.md',
+  ]);
 
   const marketplace = readJson('.claude-plugin/marketplace.json');
-  assert.equal(marketplace.name, 'darkman-x-marketplace');
-  assert.equal(marketplace.owner.url, 'https://github.com/KcAnom/darkmanx');
-  assert.deepEqual(
-    marketplace.plugins.map((p) => p.name),
-    ['darkman-x'],
-  );
+  assert.equal(marketplace.plugins[0].source, './');
+  assert.equal(marketplace.plugins[0].category, 'productivity');
 });
 
 test('plugin hooks resolve through CLAUDE_PLUGIN_ROOT, never a checkout path', () => {
@@ -90,12 +88,12 @@ test('plugin hooks resolve through CLAUDE_PLUGIN_ROOT, never a checkout path', (
   }
 });
 
-test('plugin-root resources Claude auto-discovers exist and stay unique', () => {
-  for (const dir of ['commands', 'skills', 'agents']) {
-    assert.ok(fs.existsSync(path.join(repoRoot, dir)), `missing plugin resource dir: ${dir}`);
+test('declared plugin resources exist on disk', () => {
+  const plugin = readJson('.claude-plugin/plugin.json');
+  for (const declared of [plugin.skills, plugin.commands, ...plugin.agents]) {
+    assert.ok(fs.existsSync(path.join(repoRoot, declared)), `declared but missing: ${declared}`);
   }
-  // Every Claude slash command needs its .toml twin (maintainer rule 4), and no
-  // command may collide with the CI-generated mirror under plugins/darkman-x/.
+  // Every Claude slash command needs its .toml twin (maintainer rule 4).
   const commands = fs.readdirSync(path.join(repoRoot, 'commands'));
   const markdown = commands.filter((f) => f.endsWith('.md'));
   assert.ok(markdown.length > 0);

@@ -3,16 +3,18 @@
   "version": "0.1.0",
   "description": "Make AI coding agents talk like Darkman X — short, hard, ~65% fewer output tokens. Code, commands, and errors stay byte-exact.",
   "author": {
-    "name": "darkman-x",
-    "url": "https://github.com/KcAnom/darkmanx"
+    "name": "darkman-x"
   },
-  "homepage": "https://github.com/KcAnom/darkmanx",
-  "repository": "https://github.com/KcAnom/darkmanx",
-  "license": "MIT",
   "keywords": [
     "agent-skill",
-    "prompt-compression",
-    "token-savings"
+    "prompt-compression"
+  ],
+  "skills": "./skills",
+  "commands": "./commands",
+  "agents": [
+    "./agents/xcrew-builder.md",
+    "./agents/xcrew-investigator.md",
+    "./agents/xcrew-reviewer.md"
   ],
   "hooks": {
     "SessionStart": [

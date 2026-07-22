@@ -22,7 +22,7 @@ Run `node bin/install.js --help` for the full flag list, or `--list` to see ever
 
 | Agent | id | Mechanism | Install |
 |---|---|---|---|
-| Claude Code | `claude` | native plugin (marketplace) | `/plugin marketplace add KcAnom/darkmanx` |
+| Claude Code | `claude` | native plugin (marketplace) | `claude plugin marketplace add KcAnom/darkmanx` |
 | Codex | `codex` | native (`.codex/config.toml`, `.codex/hooks.json`) | `node bin/install.js --only codex` |
 | Gemini CLI | `gemini` | native (`gemini-extension.json`, `GEMINI.md`) | `node bin/install.js --only gemini` |
 | Pi Coding Agent | — | native Pi package (`.pi` extension, skills, prompts) | `pi install git:github.com/KcAnom/darkmanx` |
@@ -39,23 +39,18 @@ Soft-detected (dir-only) providers require an explicit `--only <id>` — they wo
 
 ## Claude Code global install (any cwd)
 
-Install as a native plugin. This is the supported global path — no symlinks, no
-hand-edited `settings.json`:
-
-```
-/plugin marketplace add KcAnom/darkmanx
-/plugin install darkman-x@darkman-x-marketplace
+```bash
+claude plugin marketplace add KcAnom/darkmanx
+claude plugin install darkman-x@darkman-x-marketplace
 ```
 
-The plugin root is the repo root, so Claude auto-discovers `skills/`,
-`commands/`, and `agents/`, and `.claude-plugin/plugin.json` wires the
-`SessionStart` + `UserPromptSubmit` hooks through `${CLAUDE_PLUGIN_ROOT}`.
+`.claude-plugin/plugin.json` declares the skills, commands, and agents, and wires
+the `SessionStart` + `UserPromptSubmit` hooks through `${CLAUDE_PLUGIN_ROOT}`.
 Restart Claude Code once after installing.
 
-Use `node bin/install.js --only claude` only to wire a **local checkout** while
-developing — it writes absolute-path hooks into `~/.claude/settings.json`. Don't
-run both: two hook registrations means the activate hook fires twice per session.
-Override the config dir with `--config-dir` or `$CLAUDE_CONFIG_DIR`.
+`node bin/install.js --only claude` wires a **local checkout** instead, writing
+absolute-path hooks into `~/.claude/settings.json`. Don't apply both — duplicate
+hook registrations fire the activate hook twice per session.
 
 ## Flags
 

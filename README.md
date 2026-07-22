@@ -34,11 +34,11 @@ npx -y github:KcAnom/darkmanx
 pi install git:github.com/KcAnom/darkmanx
 ```
 
-Claude Code installs as a native plugin instead — run these inside Claude Code:
+Claude Code installs as a native plugin:
 
-```
-/plugin marketplace add KcAnom/darkmanx
-/plugin install darkman-x@darkman-x-marketplace
+```bash
+claude plugin marketplace add KcAnom/darkmanx
+claude plugin install darkman-x@darkman-x-marketplace
 ```
 
 Full per-agent matrix and flags: [`INSTALL.md`](./INSTALL.md).
