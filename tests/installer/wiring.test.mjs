@@ -57,6 +57,74 @@ test('Pi prompt filenames do not collide with extension command names', () => {
   }
 });
 
+test('Claude plugin and marketplace manifests carry real repository metadata', () => {
+  const plugin = readJson('.claude-plugin/plugin.json');
+  assert.equal(plugin.name, 'darkman-x');
+  assert.equal(plugin.repository, 'https://github.com/KcAnom/darkmanx');
+  assert.equal(plugin.homepage, 'https://github.com/KcAnom/darkmanx');
+  assert.equal(plugin.author.url, 'https://github.com/KcAnom/darkmanx');
+  assert.equal(plugin.license, 'MIT');
+
+  const marketplace = readJson('.claude-plugin/marketplace.json');
+  assert.equal(marketplace.name, 'darkman-x-marketplace');
+  assert.equal(marketplace.owner.url, 'https://github.com/KcAnom/darkmanx');
+  assert.deepEqual(
+    marketplace.plugins.map((p) => p.name),
+    ['darkman-x'],
+  );
+});
+
+test('plugin hooks resolve through CLAUDE_PLUGIN_ROOT, never a checkout path', () => {
+  const plugin = readJson('.claude-plugin/plugin.json');
+  const events = Object.keys(plugin.hooks);
+  assert.deepEqual(events.sort(), ['SessionStart', 'UserPromptSubmit']);
+  for (const event of events) {
+    for (const group of plugin.hooks[event]) {
+      for (const hook of group.hooks) {
+        assert.equal(hook.type, 'command', event);
+        assert.match(hook.command, /\$\{CLAUDE_PLUGIN_ROOT\}/, event);
+        assert.doesNotMatch(hook.command, /\/Users\/|~\//, event);
+        assert.ok(Number.isInteger(hook.timeout), event);
+      }
+    }
+  }
+});
+
+test('plugin-root resources Claude auto-discovers exist and stay unique', () => {
+  for (const dir of ['commands', 'skills', 'agents']) {
+    assert.ok(fs.existsSync(path.join(repoRoot, dir)), `missing plugin resource dir: ${dir}`);
+  }
+  // Every Claude slash command needs its .toml twin (maintainer rule 4), and no
+  // command may collide with the CI-generated mirror under plugins/darkman-x/.
+  const commands = fs.readdirSync(path.join(repoRoot, 'commands'));
+  const markdown = commands.filter((f) => f.endsWith('.md'));
+  assert.ok(markdown.length > 0);
+  for (const command of markdown) {
+    const toml = command.replace(/\.md$/, '.toml');
+    assert.ok(commands.includes(toml), `missing ${toml} for ${command}`);
+  }
+  assert.ok(
+    !fs.existsSync(path.join(repoRoot, 'plugins', 'darkman-x', 'commands')),
+    'mirror must not ship a second copy of commands/',
+  );
+});
+
+test('installer never fakes a Claude plugin install', () => {
+  const installer = fs.readFileSync(path.join(repoRoot, 'bin', 'install.js'), 'utf8');
+  const installClaude = installer.match(/function installClaude\([\s\S]*?\n}\n/);
+  assert.ok(installClaude, 'installClaude not found');
+
+  // The old stub wrote ~/.claude/plugins/darkman-x.json, a file Claude never
+  // reads. uninstallClaude still deletes it to clean up pre-fix installs, so
+  // this assertion is scoped to the install path only.
+  assert.doesNotMatch(installClaude[0], /darkman-x\.json/);
+  assert.doesNotMatch(installClaude[0], /installedAt/);
+
+  // Plugin detection must read the registry Claude actually maintains.
+  assert.match(installer, /installed_plugins\.json/);
+  assert.match(installer, /plugin marketplace add KcAnom\/darkmanx/);
+});
+
 test('public install surfaces point at the real GitHub repository', () => {
   const files = [
     'README.md',

@@ -222,22 +222,45 @@ function claudeConfigDir(args) {
   return args.configDir || settingsLib.claudeConfigDir();
 }
 
+/**
+ * True when darkman-x is registered through Claude's own plugin registry
+ * (`/plugin marketplace add` + `/plugin install`). Only then does
+ * `.claude-plugin/plugin.json` actually wire the hooks, because only then does
+ * Claude expand ${CLAUDE_PLUGIN_ROOT}. Never throws — an unreadable or absent
+ * registry just means "not installed as a plugin".
+ */
+function claudePluginInstalled(configDir) {
+  try {
+    const registry = JSON.parse(
+      fs.readFileSync(path.join(configDir, 'plugins', 'installed_plugins.json'), 'utf8')
+    );
+    return Object.keys(registry.plugins || {}).some((key) => key.split('@')[0] === 'darkman-x');
+  } catch (_) {
+    return false;
+  }
+}
+
 function installClaude(args, log) {
   const configDir = claudeConfigDir(args);
-  const pluginsDir = path.join(configDir, 'plugins');
-  log('claude: installing plugin into ' + pluginsDir);
-  if (!args.dryRun) {
-    fs.mkdirSync(pluginsDir, { recursive: true });
-    // Plugin dir mirrors the repo's .claude-plugin manifest + hook wiring;
-    // the manifest itself is authored elsewhere in the repo tree.
-    const marker = path.join(pluginsDir, 'darkman-x.json');
-    fs.writeFileSync(marker, JSON.stringify({ source: REPO_ROOT, installedAt: new Date(0).toISOString() }, null, 2));
-  }
 
-  const pluginWiresHooks = fs.existsSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'));
+  // The plugin manifest only takes effect for marketplace installs. A checkout
+  // install has no ${CLAUDE_PLUGIN_ROOT}, so hooks must go into settings.json.
+  const pluginWiresHooks = claudePluginInstalled(configDir);
   const shouldAddHooks = args.withHooks || (!pluginWiresHooks && !args.noHooks);
 
+  if (pluginWiresHooks) {
+    log('claude: darkman-x is installed as a plugin — hooks come from .claude-plugin/plugin.json');
+  } else {
+    log('claude: no plugin install detected, wiring this checkout (' + REPO_ROOT + ')');
+    log('claude: for a global install instead, run in Claude Code:');
+    log('claude:   /plugin marketplace add KcAnom/darkmanx');
+    log('claude:   /plugin install darkman-x@darkman-x-marketplace');
+  }
+
   if (shouldAddHooks && !args.noHooks) {
+    if (pluginWiresHooks) {
+      log('claude: warning — --with-hooks on top of a plugin install duplicates the hooks');
+    }
     const settingsPath = path.join(configDir, 'settings.json');
     log('claude: registering hooks in ' + settingsPath);
     if (!args.dryRun) {
@@ -255,8 +278,6 @@ function installClaude(args, log) {
       settings.hooks = settingsLib.validateHookFields(settings.hooks);
       settingsLib.writeSettings(settingsPath, settings);
     }
-  } else if (pluginWiresHooks) {
-    log('claude: plugin already wires hooks, skipping separate hook registration');
   }
 }
 
