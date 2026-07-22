@@ -61,11 +61,11 @@ test('Claude plugin manifest declares its resources, like the Pi manifest does',
   const plugin = readJson('.claude-plugin/plugin.json');
   assert.equal(plugin.skills, './skills');
   assert.equal(plugin.commands, './commands');
-  assert.deepEqual(plugin.agents, [
-    './agents/xcrew-builder.md',
-    './agents/xcrew-investigator.md',
-    './agents/xcrew-reviewer.md',
-  ]);
+  // agents is deliberately NOT declared: the schema rejects both a directory
+  // string and an array of directories, and an array of .md files validates but
+  // loads zero agents. Auto-discovery of ./agents is the only form that works.
+  assert.equal(plugin.agents, undefined);
+  assert.ok(fs.existsSync(path.join(repoRoot, 'agents')));
 
   const marketplace = readJson('.claude-plugin/marketplace.json');
   assert.equal(marketplace.plugins[0].source, './');
@@ -90,7 +90,7 @@ test('plugin hooks resolve through CLAUDE_PLUGIN_ROOT, never a checkout path', (
 
 test('declared plugin resources exist on disk', () => {
   const plugin = readJson('.claude-plugin/plugin.json');
-  for (const declared of [plugin.skills, plugin.commands, ...plugin.agents]) {
+  for (const declared of [plugin.skills, plugin.commands]) {
     assert.ok(fs.existsSync(path.join(repoRoot, declared)), `declared but missing: ${declared}`);
   }
   // Every Claude slash command needs its .toml twin (maintainer rule 4).
