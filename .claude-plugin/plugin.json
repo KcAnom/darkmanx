@@ -12,9 +12,7 @@
   "skills": "./skills",
   "commands": "./commands",
   "agents": [
-    "./agents/xcrew-builder.md",
-    "./agents/xcrew-investigator.md",
-    "./agents/xcrew-reviewer.md"
+    "./agents"
   ],
   "hooks": {
     "SessionStart": [
